@@ -9,7 +9,7 @@ background_mode = 1
 background_color = Color(0.0156863, 0.0196078, 0.0392157, 1)
 ambient_light_source = 2
 ambient_light_color = Color(0.4, 0.46, 0.6, 1)
-ambient_light_energy = 0.8
+ambient_light_energy = 1.0
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_4o4n8"]
 radius = 0.35
@@ -29,7 +29,7 @@ shadow_enabled = true
 [node name="FillLight" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
 light_color = Color(0.564706, 0.780392, 1, 1)
-light_energy = 2.1
+light_energy = 2.5
 omni_range = 18.0
 
 [node name="Music" type="AudioStreamPlayer" parent="."]

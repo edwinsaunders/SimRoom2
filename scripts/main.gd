@@ -7,8 +7,18 @@ const WALL_THICKNESS := 0.2
 const DOOR_WIDTH := 2.2
 const DOOR_HEIGHT := 2.8
 const DOOR_THICKNESS := 0.08
+const DOOR_INTERACTION_DISTANCE := 2.8
+const DOOR_OPEN_ANGLE := deg_to_rad(-68.0)
+const DOOR_ANIMATION_DURATION := 0.2
 const SECOND_ROOM_OFFSET := Vector3(ROOM_WIDTH, 0, 0)
-const AudioLibrary = preload("res://scripts/audio_library.gd")
+const SCREEN_SIZE := Vector2(3.2, 1.8)
+const VIDEO_AUDIO_MIN_DISTANCE := 1.8
+const VIDEO_AUDIO_MAX_DISTANCE := 14.0
+const VIDEO_AUDIO_MIN_VOLUME_DB := -28.0
+const VIDEO_AUDIO_MAX_VOLUME_DB := -4.0
+const VIDEO_AUDIO_SMOOTHING_SPEED := 8.0
+const DoorScript = preload("res://scripts/door.gd")
+const VideoScreenScript = preload("res://scripts/video_screen.gd")
 
 @onready var music: AudioStreamPlayer = $Music
 @onready var player: CharacterBody3D = $Player
@@ -23,19 +33,14 @@ var _quit_requested := false
 
 func _ready() -> void:
 	get_tree().auto_accept_quit = false
-	music.stream = AudioLibrary.create_music_stream()
-	if not DisplayServer.get_name().contains("headless"):
-		music.finished.connect(_restart_music)
-		music.play()
+	music.stop()
+	music.stream = null
 
 	_build_materials()
 	_build_room()
 	_build_screen_frame()
+	_build_video_screen()
 	print("SimRoom ready")
-
-
-func _restart_music() -> void:
-	music.play()
 
 
 func request_quit() -> void:
@@ -120,16 +125,33 @@ func _build_shared_doorway(wall_x: float) -> void:
 
 
 func _build_door_leaf(wall_x: float) -> void:
-	var door := MeshInstance3D.new()
-	door.name = "DoorLeaf"
+	var door := Node3D.new()
+	door.name = "Door"
+	door.script = DoorScript
+	door.position = Vector3(wall_x, 0, -DOOR_WIDTH * 0.5)
+	add_child(door)
+
+	var leaf := StaticBody3D.new()
+	leaf.name = "Leaf"
+	door.add_child(leaf)
 
 	var mesh := BoxMesh.new()
-	mesh.size = Vector3(DOOR_THICKNESS, DOOR_HEIGHT - 0.15, DOOR_WIDTH * 0.48)
-	door.mesh = mesh
-	door.material_override = _door_material
-	door.position = Vector3(wall_x + 0.45, (DOOR_HEIGHT - 0.15) * 0.5, -DOOR_WIDTH * 0.32)
-	door.rotation.y = deg_to_rad(-68.0)
-	add_child(door)
+	mesh.size = Vector3(DOOR_THICKNESS, DOOR_HEIGHT - 0.15, DOOR_WIDTH)
+
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = mesh.size
+	collision.shape = shape
+	collision.position = Vector3(DOOR_THICKNESS * 0.5, mesh.size.y * 0.5, mesh.size.z * 0.5)
+	leaf.add_child(collision)
+
+	var mesh_instance := MeshInstance3D.new()
+	mesh_instance.mesh = mesh
+	mesh_instance.material_override = _door_material
+	mesh_instance.position = collision.position
+	leaf.add_child(mesh_instance)
+
+	door.configure(player, DOOR_INTERACTION_DISTANCE, DOOR_OPEN_ANGLE, DOOR_ANIMATION_DURATION)
 
 
 func _build_screen_frame() -> void:
@@ -140,6 +162,33 @@ func _build_screen_frame() -> void:
 	frame.mesh = mesh
 	frame.material_override = _bezel_material
 	frame.position = Vector3(0, 2.05, -5.93)
+	add_child(frame)
+
+
+func _build_video_screen() -> void:
+	var screen := Node3D.new()
+	screen.name = "VideoScreen"
+	screen.script = VideoScreenScript
+	screen.position = SECOND_ROOM_OFFSET + Vector3(0, 2.05, -5.87)
+	screen.configure(
+		player,
+		"res://output.ogv",
+		SCREEN_SIZE,
+		VIDEO_AUDIO_MIN_DISTANCE,
+		VIDEO_AUDIO_MAX_DISTANCE,
+		VIDEO_AUDIO_MIN_VOLUME_DB,
+		VIDEO_AUDIO_MAX_VOLUME_DB,
+		VIDEO_AUDIO_SMOOTHING_SPEED
+	)
+	add_child(screen)
+
+	var frame := MeshInstance3D.new()
+	frame.name = "VideoScreenFrame"
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(3.5, 2.1, 0.08)
+	frame.mesh = mesh
+	frame.material_override = _bezel_material
+	frame.position = SECOND_ROOM_OFFSET + Vector3(0, 2.05, -5.93)
 	add_child(frame)
 
 
