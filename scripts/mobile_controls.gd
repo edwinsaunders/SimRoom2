@@ -3,7 +3,9 @@ extends CanvasLayer
 const MOVE_PAD_SIZE := 220.0
 const MOVE_KNOB_SIZE := 84.0
 const MOVE_RADIUS := 72.0
-const LOOK_ZONE_COLOR := Color(1, 1, 1, 0.035)
+const LOOK_ZONE_COLOR := Color(1, 1, 1, 0.08)
+const ACTION_BUTTON_WIDTH := 136.0
+const ACTION_BUTTON_HEIGHT := 58.0
 
 var move_vector := Vector2.ZERO
 
@@ -18,16 +20,23 @@ var _root: Control
 var _move_zone: Control
 var _move_knob: Control
 var _look_zone: Control
+var _jump_zone: Control
+var _interact_zone: Control
 
 
 func _ready() -> void:
-	visible = OS.has_feature("android") or OS.has_feature("ios")
+	visible = _should_show_mobile_controls()
 	if not visible:
 		return
 
 	layer = 10
 	_build_ui()
 	_update_move_knob(Vector2.ZERO)
+
+
+func _should_show_mobile_controls() -> bool:
+	var os_name := OS.get_name()
+	return os_name == "Android" or os_name == "iOS" or OS.has_feature("mobile")
 
 
 func consume_look_delta() -> Vector2:
@@ -79,14 +88,14 @@ func _build_ui() -> void:
 
 	var move_base := ColorRect.new()
 	move_base.name = "MoveBase"
-	move_base.color = Color(0.82, 0.9, 1.0, 0.14)
+	move_base.color = Color(0.82, 0.9, 1.0, 0.24)
 	move_base.set_anchors_preset(Control.PRESET_FULL_RECT)
 	move_base.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_move_zone.add_child(move_base)
 
 	_move_knob = ColorRect.new()
 	_move_knob.name = "MoveKnob"
-	_move_knob.color = Color(0.9, 0.97, 1.0, 0.34)
+	_move_knob.color = Color(0.9, 0.97, 1.0, 0.5)
 	_move_knob.custom_minimum_size = Vector2(MOVE_KNOB_SIZE, MOVE_KNOB_SIZE)
 	_move_knob.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_move_zone.add_child(_move_knob)
@@ -105,32 +114,55 @@ func _build_ui() -> void:
 	_look_zone.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_look_zone)
 
-	var interact_button := _make_action_button("Use", 164.0)
-	interact_button.pressed.connect(_queue_interact)
-	_root.add_child(interact_button)
+	_interact_zone = _make_action_zone("InteractZone", "USE", 164.0)
+	_root.add_child(_interact_zone)
 
-	var jump_button := _make_action_button("Jump", 76.0)
-	jump_button.pressed.connect(_queue_jump)
-	_root.add_child(jump_button)
+	_jump_zone = _make_action_zone("JumpZone", "JUMP", 90.0)
+	_root.add_child(_jump_zone)
 
 
-func _make_action_button(label: String, bottom_offset: float) -> Button:
-	var button := Button.new()
-	button.text = label
-	button.anchor_left = 1.0
-	button.anchor_top = 1.0
-	button.anchor_right = 1.0
-	button.anchor_bottom = 1.0
-	button.offset_left = -164.0
-	button.offset_top = -bottom_offset
-	button.offset_right = -28.0
-	button.offset_bottom = -(bottom_offset - 56.0)
-	button.modulate = Color(1, 1, 1, 0.62)
-	return button
+func _make_action_zone(node_name: String, label_text: String, bottom_offset: float) -> Control:
+	var zone := Control.new()
+	zone.name = node_name
+	zone.anchor_left = 1.0
+	zone.anchor_top = 1.0
+	zone.anchor_right = 1.0
+	zone.anchor_bottom = 1.0
+	zone.offset_left = -(ACTION_BUTTON_WIDTH + 28.0)
+	zone.offset_top = -bottom_offset
+	zone.offset_right = -28.0
+	zone.offset_bottom = -(bottom_offset - ACTION_BUTTON_HEIGHT)
+	zone.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var background := ColorRect.new()
+	background.name = "Background"
+	background.color = Color(0.86, 0.94, 1.0, 0.28)
+	background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	zone.add_child(background)
+
+	var label := Label.new()
+	label.name = "Label"
+	label.text = label_text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	zone.add_child(label)
+
+	return zone
 
 
 func _handle_screen_touch(event: InputEventScreenTouch) -> void:
 	if event.pressed:
+		if _jump_zone.get_global_rect().has_point(event.position):
+			_queue_jump()
+			return
+
+		if _interact_zone.get_global_rect().has_point(event.position):
+			_queue_interact()
+			return
+
 		if _move_touch_id == -1 and _move_zone.get_global_rect().has_point(event.position):
 			_move_touch_id = event.index
 			_move_center = _move_zone.get_global_rect().get_center()

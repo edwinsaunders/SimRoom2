@@ -4,6 +4,8 @@ const OUTPUT_PATH := "build/android/SimRoom.pck"
 const ROOT_ENTRIES := [
 	"project.godot",
 	"icon.svg",
+	"output.ogv",
+	"output_audio.wav",
 	"scenes",
 	"scripts"
 ]

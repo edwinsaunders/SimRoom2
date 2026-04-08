@@ -12,6 +12,7 @@ var _max_volume_db := -4.0
 var _smoothing_speed := 8.0
 var _current_volume_db := _min_volume_db
 var _video_player: VideoStreamPlayer
+var _media_started := false
 
 
 func configure(
@@ -22,7 +23,7 @@ func configure(
 	max_distance: float,
 	min_volume_db: float,
 	max_volume_db: float,
-	smoothing_speed: float
+	smoothing_speed: float,
 ) -> void:
 	_player = player
 	_video_path = video_path
@@ -72,8 +73,7 @@ func _ready() -> void:
 	quad.material_override = material
 	add_child(quad)
 
-	if not DisplayServer.get_name().contains("headless"):
-		_video_player.play()
+	_start_media.call_deferred()
 
 
 func _restart_video() -> void:
@@ -82,6 +82,9 @@ func _restart_video() -> void:
 
 
 func _process(delta: float) -> void:
+	if not _media_started and not DisplayServer.get_name().contains("headless"):
+		_start_media()
+
 	if _player == null or _video_player == null:
 		return
 
@@ -93,3 +96,12 @@ func _process(delta: float) -> void:
 	var blend: float = clamp(delta * _smoothing_speed, 0.0, 1.0)
 	_current_volume_db = lerp(_current_volume_db, target_volume_db, blend)
 	_video_player.volume_db = clamp(_current_volume_db, _min_volume_db, _max_volume_db)
+
+
+func _start_media() -> void:
+	if _media_started or DisplayServer.get_name().contains("headless"):
+		return
+
+	_media_started = true
+	if _video_player != null:
+		_video_player.play()

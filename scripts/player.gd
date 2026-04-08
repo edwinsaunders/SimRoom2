@@ -15,24 +15,29 @@ const AudioLibrary = preload("res://scripts/audio_library.gd")
 
 var _pitch := 0.0
 var _mobile_controls: CanvasLayer
+var _audio_listener: AudioListener3D
 
 
 func _ready() -> void:
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	jump_sfx.stream = AudioLibrary.create_jump_stream()
 	land_sfx.stream = AudioLibrary.create_land_stream()
 	_mobile_controls = get_parent().get_node_or_null("MobileControls")
+	_ensure_audio_listener()
+	if _using_mobile_controls():
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	else:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not _using_mobile_controls():
 		rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
 		_pitch = clamp(_pitch - event.relative.y * MOUSE_SENSITIVITY, MIN_PITCH, MAX_PITCH)
 		camera.rotation.x = _pitch
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and not _using_mobile_controls():
 		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
+	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE and not _using_mobile_controls():
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		else:
@@ -67,7 +72,7 @@ func _physics_process(delta: float) -> void:
 	if Input.is_physical_key_pressed(KEY_D):
 		input_vector.x += 1.0
 
-	if _mobile_controls != null and _mobile_controls.visible:
+	if _using_mobile_controls():
 		input_vector += _mobile_controls.move_vector
 		jump_requested = jump_requested or _mobile_controls.consume_jump_requested()
 		if _mobile_controls.consume_interact_requested():
@@ -113,7 +118,7 @@ func _exit_tree() -> void:
 
 
 func _apply_mobile_look() -> void:
-	if _mobile_controls == null or not _mobile_controls.visible:
+	if not _using_mobile_controls():
 		return
 
 	var look_delta: Vector2 = _mobile_controls.consume_look_delta()
@@ -138,3 +143,17 @@ func _try_mobile_interact() -> void:
 
 	if nearest_door != null and nearest_door.has_method("try_interact"):
 		nearest_door.try_interact(self)
+
+
+func _using_mobile_controls() -> bool:
+	return _mobile_controls != null and _mobile_controls.visible
+
+
+func _ensure_audio_listener() -> void:
+	_audio_listener = camera.get_node_or_null("AudioListener3D")
+	if _audio_listener == null:
+		_audio_listener = AudioListener3D.new()
+		_audio_listener.name = "AudioListener3D"
+		camera.add_child(_audio_listener)
+
+	_audio_listener.make_current()
