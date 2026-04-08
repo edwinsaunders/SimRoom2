@@ -14,12 +14,14 @@ const AudioLibrary = preload("res://scripts/audio_library.gd")
 @onready var land_sfx: AudioStreamPlayer = $LandSfx
 
 var _pitch := 0.0
+var _mobile_controls: CanvasLayer
 
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	jump_sfx.stream = AudioLibrary.create_jump_stream()
 	land_sfx.stream = AudioLibrary.create_land_stream()
+	_mobile_controls = get_parent().get_node_or_null("MobileControls")
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -52,6 +54,9 @@ func _physics_process(delta: float) -> void:
 	var was_on_floor := is_on_floor()
 	var previous_vertical_velocity := velocity.y
 	var input_vector := Vector2.ZERO
+	var jump_requested := Input.is_physical_key_pressed(KEY_SPACE)
+
+	_apply_mobile_look()
 
 	if Input.is_physical_key_pressed(KEY_W):
 		input_vector.y -= 1.0
@@ -61,6 +66,12 @@ func _physics_process(delta: float) -> void:
 		input_vector.x -= 1.0
 	if Input.is_physical_key_pressed(KEY_D):
 		input_vector.x += 1.0
+
+	if _mobile_controls != null and _mobile_controls.visible:
+		input_vector += _mobile_controls.move_vector
+		jump_requested = jump_requested or _mobile_controls.consume_jump_requested()
+		if _mobile_controls.consume_interact_requested():
+			_try_mobile_interact()
 
 	var direction := Vector3(input_vector.x, 0.0, input_vector.y)
 	if direction != Vector3.ZERO:
@@ -78,7 +89,7 @@ func _physics_process(delta: float) -> void:
 
 	if not is_on_floor():
 		velocity.y -= GRAVITY * delta
-	elif Input.is_physical_key_pressed(KEY_SPACE):
+	elif jump_requested:
 		velocity.y = JUMP_VELOCITY
 		jump_sfx.play()
 	else:
@@ -99,3 +110,31 @@ func prepare_for_quit() -> void:
 
 func _exit_tree() -> void:
 	prepare_for_quit()
+
+
+func _apply_mobile_look() -> void:
+	if _mobile_controls == null or not _mobile_controls.visible:
+		return
+
+	var look_delta: Vector2 = _mobile_controls.consume_look_delta()
+	if look_delta == Vector2.ZERO:
+		return
+
+	rotate_y(-look_delta.x * MOUSE_SENSITIVITY)
+	_pitch = clamp(_pitch - look_delta.y * MOUSE_SENSITIVITY, MIN_PITCH, MAX_PITCH)
+	camera.rotation.x = _pitch
+
+
+func _try_mobile_interact() -> void:
+	var nearest_door: Node3D = null
+	var nearest_distance := INF
+
+	for door in get_tree().get_nodes_in_group("doors"):
+		if door.has_method("can_interact") and door.can_interact(self):
+			var distance: float = global_position.distance_to(door.global_position)
+			if distance < nearest_distance:
+				nearest_distance = distance
+				nearest_door = door
+
+	if nearest_door != null and nearest_door.has_method("try_interact"):
+		nearest_door.try_interact(self)

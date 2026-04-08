@@ -1,15 +1,16 @@
-[gd_scene load_steps=5 format=3 uid="uid://cehqg0d1rtm5q"]
+[gd_scene load_steps=6 format=3 uid="uid://cehqg0d1rtm5q"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_hfj5m"]
 [ext_resource type="Script" path="res://scripts/player.gd" id="2_s0snk"]
 [ext_resource type="Script" path="res://scripts/animated_screen.gd" id="3_n8uyi"]
+[ext_resource type="Script" path="res://scripts/mobile_controls.gd" id="4_ljv7h"]
 
 [sub_resource type="Environment" id="Environment_jp4p0"]
 background_mode = 1
 background_color = Color(0.0156863, 0.0196078, 0.0392157, 1)
 ambient_light_source = 2
 ambient_light_color = Color(0.4, 0.46, 0.6, 1)
-ambient_light_energy = 1.0
+ambient_light_energy = 1.15
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_4o4n8"]
 radius = 0.35
@@ -28,6 +29,12 @@ shadow_enabled = true
 
 [node name="FillLight" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
+light_color = Color(0.564706, 0.780392, 1, 1)
+light_energy = 2.5
+omni_range = 18.0
+
+[node name="SecondRoomFillLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 3, 0)
 light_color = Color(0.564706, 0.780392, 1, 1)
 light_energy = 2.5
 omni_range = 18.0
@@ -53,6 +60,9 @@ volume_db = -8.0
 
 [node name="LandSfx" type="AudioStreamPlayer" parent="Player"]
 volume_db = -10.0
+
+[node name="MobileControls" type="CanvasLayer" parent="."]
+script = ExtResource("4_ljv7h")
 
 [node name="Screen" type="MeshInstance3D" parent="."]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 2.05, -5.87)

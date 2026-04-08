@@ -22,5 +22,9 @@ Redot_v26.1-stable_linux_x64.zip
 *.apk
 *.aab
 *.pck
+*.idsig
+*.keystore
+*.jks
 *.import
 *.tmp
+local.properties

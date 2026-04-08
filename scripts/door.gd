@@ -1,6 +1,7 @@
 extends Node3D
 
 const CLOSED_ANGLE := 0.0
+const INTERACTION_GROUP := "doors"
 
 var _player: Node3D
 var _interaction_distance := 2.8
@@ -9,6 +10,10 @@ var _open_angle := deg_to_rad(-68.0)
 var _animation_duration := 0.2
 var _is_open := false
 var _is_animating := false
+
+
+func _ready() -> void:
+	add_to_group(INTERACTION_GROUP)
 
 
 func configure(player: Node3D, interaction_distance: float, open_angle: float, animation_duration: float) -> void:
@@ -24,8 +29,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_E:
-		if global_position.distance_to(_player.global_position) <= _interaction_distance:
-			_toggle()
+		try_interact(_player)
+
+
+func try_interact(player: Node3D) -> bool:
+	if player == null or not can_interact(player):
+		return false
+
+	_toggle()
+	return true
+
+
+func can_interact(player: Node3D) -> bool:
+	return global_position.distance_to(player.global_position) <= _interaction_distance
 
 
 func _toggle() -> void:
