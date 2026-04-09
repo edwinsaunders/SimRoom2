@@ -1,0 +1,160 @@
+name: Exports
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+jobs:
+  export-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Host Tools
+        run: sudo apt-get update && sudo apt-get install -y unzip
+
+      - name: Download Redot Linux Binary And Templates
+        run: |
+          mkdir -p .ci/downloads .ci/redot .ci/export-templates
+          curl -L -o .ci/downloads/redot-linux.zip https://sourceforge.net/projects/redot-engine.mirror/files/redot-26.1-stable/Redot_v26.1-stable_linux_x64.zip/download
+          curl -L -o .ci/downloads/redot-templates.tpz https://sourceforge.net/projects/redot-engine.mirror/files/redot-26.1-stable/Redot_v26.1-stable_export_templates.tpz/download
+          unzip -q .ci/downloads/redot-linux.zip -d .ci/redot
+          unzip -q .ci/downloads/redot-templates.tpz -d .ci/export-templates
+          chmod +x "$(find .ci/redot -type f | head -n 1)"
+
+      - name: Install Android SDK Metadata Needed By Redot Validation
+        run: |
+          mkdir -p .ci/android-sdk/cmdline-tools
+          curl -L -o .ci/android-sdk/commandlinetools-linux.zip https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip
+          unzip -q .ci/android-sdk/commandlinetools-linux.zip -d .ci/android-sdk/cmdline-tools
+          mv .ci/android-sdk/cmdline-tools/cmdline-tools .ci/android-sdk/cmdline-tools/latest
+          yes | .ci/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root="$PWD/.ci/android-sdk" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.1"
+
+      - name: Export Linux
+        run: |
+          ENGINE_BIN="$(find .ci/redot -type f | head -n 1)"
+          python3 tools/export.py linux --engine "$ENGINE_BIN" --template-dir .ci/export-templates --android-sdk .ci/android-sdk --verify-clean
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-export
+          path: |
+            build/linux/**
+            build/logs/linux-export.log
+
+  export-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Download Redot Windows Binary And Templates
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path .ci/downloads, .ci/redot, .ci/export-templates | Out-Null
+          Invoke-WebRequest -Uri "https://sourceforge.net/projects/redot-engine.mirror/files/redot-26.1-stable/Redot_v26.1-stable_win64.exe.zip/download" -OutFile ".ci/downloads/redot-windows.zip"
+          Invoke-WebRequest -Uri "https://sourceforge.net/projects/redot-engine.mirror/files/redot-26.1-stable/Redot_v26.1-stable_export_templates.tpz/download" -OutFile ".ci/downloads/redot-templates.tpz"
+          Expand-Archive -Path ".ci/downloads/redot-windows.zip" -DestinationPath ".ci/redot" -Force
+          Expand-Archive -Path ".ci/downloads/redot-templates.tpz" -DestinationPath ".ci/export-templates" -Force
+
+      - name: Install Android SDK Metadata Needed By Redot Validation
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path .ci/android-sdk, .ci/android-sdk/cmdline-tools | Out-Null
+          Invoke-WebRequest -Uri "https://dl.google.com/android/repository/commandlinetools-win-13114758_latest.zip" -OutFile ".ci/android-sdk/commandlinetools-win.zip"
+          Expand-Archive -Path ".ci/android-sdk/commandlinetools-win.zip" -DestinationPath ".ci/android-sdk/cmdline-tools" -Force
+          Move-Item ".ci/android-sdk/cmdline-tools/cmdline-tools" ".ci/android-sdk/cmdline-tools/latest"
+          $sdkRoot = (Resolve-Path ".ci/android-sdk").Path
+          & ".ci/android-sdk/cmdline-tools/latest/bin/sdkmanager.bat" --sdk_root=$sdkRoot `
+            "platform-tools" `
+            "platforms;android-35" `
+            "build-tools;35.0.1"
+
+      - name: Export Windows
+        shell: pwsh
+        run: |
+          $engine = (Get-ChildItem .ci/redot -Recurse -File -Filter *.exe | Select-Object -First 1).FullName
+          py tools/export.py windows --engine $engine --template-dir .ci/export-templates --android-sdk .ci/android-sdk --verify-clean
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-export
+          path: |
+            build/windows/**
+            build/logs/windows-export.log
+
+  export-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Host Tools
+        run: sudo apt-get update && sudo apt-get install -y unzip
+
+      - name: Download Redot Linux Binary And Templates
+        run: |
+          mkdir -p .ci/downloads .ci/redot .ci/export-templates
+          curl -L -o .ci/downloads/redot-linux.zip https://sourceforge.net/projects/redot-engine.mirror/files/redot-26.1-stable/Redot_v26.1-stable_linux_x64.zip/download
+          curl -L -o .ci/downloads/redot-templates.tpz https://sourceforge.net/projects/redot-engine.mirror/files/redot-26.1-stable/Redot_v26.1-stable_export_templates.tpz/download
+          unzip -q .ci/downloads/redot-linux.zip -d .ci/redot
+          unzip -q .ci/downloads/redot-templates.tpz -d .ci/export-templates
+          chmod +x "$(find .ci/redot -type f | head -n 1)"
+
+      - name: Install Android SDK
+        run: |
+          mkdir -p .ci/android-sdk/cmdline-tools
+          curl -L -o .ci/android-sdk/commandlinetools-linux.zip https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip
+          unzip -q .ci/android-sdk/commandlinetools-linux.zip -d .ci/android-sdk/cmdline-tools
+          mv .ci/android-sdk/cmdline-tools/cmdline-tools .ci/android-sdk/cmdline-tools/latest
+          yes | .ci/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root="$PWD/.ci/android-sdk" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.1"
+
+      - name: Export Android
+        run: |
+          ENGINE_BIN="$(find .ci/redot -type f | head -n 1)"
+          python3 tools/export.py android \
+            --engine "$ENGINE_BIN" \
+            --template-dir .ci/export-templates \
+            --android-sdk .ci/android-sdk \
+            --verify-clean
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-export
+          path: |
+            build/android/SimRoom-debug.apk
+            build/android/SimRoom.pck
+            build/logs/android-pack.log

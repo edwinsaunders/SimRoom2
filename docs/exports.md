@@ -1,96 +1,149 @@
 # Export Guide
 
-This repository keeps one shared Redot project at the repo root. Linux, Windows, and Android exports all come from the same [project.godot](/home/edwin/Documents/SimRoom/project.godot), [scenes](/home/edwin/Documents/SimRoom/scenes), and [scripts](/home/edwin/Documents/SimRoom/scripts).
+This repo now uses one cross-platform wrapper around the real Redot export workflow:
 
-## Prerequisites
+- local command: `python tools/export.py ...`
+- CI automation: [`.github/workflows/exports.yml`](/home/edwin/Documents/SimRoom2/.github/workflows/exports.yml)
 
-- Redot editor/runtime available locally
-- Redot export templates installed for the target platform
-- For Android only:
-  - JDK 17
-  - Android SDK command-line tools
-  - Android platform/build-tools matching your export setup
+The wrapper does not invent a new build system. It shells out to Redot's real CLI export commands for desktop targets and uses the repo's existing Android source-template path where that is the practical workflow.
 
-## Linux Development Run
+## Local Usage
+
+From the repo root:
 
 ```bash
-cd /path/to/SimRoom
-chmod +x ./run.sh ./redot.linuxbsd.editor.x86_64
-./run.sh
+python3 tools/export.py linux \
+  --engine ./redot.linuxbsd.editor.x86_64 \
+  --android-sdk android-sdk \
+  --verify-clean
 ```
 
-## Linux Export
-
-Recommended flow:
-
-1. Open the project in Redot.
-2. Open `Project -> Export`.
-3. Add a Linux desktop preset if the project does not already have one.
-4. Export to a path under `build/` or `dist/`, for example `build/linux/SimRoom.x86_64`.
-
-This repository does not currently commit a Linux preset, so that preset creation is a manual editor step before CLI export automation.
-
-## Windows Export
-
-Recommended flow:
-
-1. Open the project in Redot.
-2. Open `Project -> Export`.
-3. Add a Windows desktop preset if the project does not already have one.
-4. Export to a path under `build/` or `dist/`, for example `build/windows/SimRoom.exe`.
-
-Keep the generated `.pck` beside the Windows executable if your chosen export mode does not embed it automatically.
-
-This repository does not currently commit a Windows preset, so that preset creation is a manual editor step before CLI export automation.
-
-## Android Export
-
-The Android path in this repo is intentionally isolated under [platform/android](/home/edwin/Documents/SimRoom/platform/android). Shared game content stays in the root project.
-
-### Prepare the shared game pack
+Multiple targets:
 
 ```bash
-cd /path/to/SimRoom
-./run.sh --headless --script platform/android/build_pck.gd
+python3 tools/export.py linux windows \
+  --engine ./redot.linuxbsd.editor.x86_64 \
+  --android-sdk android-sdk \
+  --verify-clean
 ```
 
-This writes `build/android/SimRoom.pck`.
-
-### Build an Android source export
-
-Use Redot's Android export/template flow to generate a Gradle project under `build/android_source/`. If your Redot CLI exporter works in your environment, use it. If not, the Gradle source-template fallback used in this repo is still compatible with the same shared project files.
-
-Before Android export can work on a fresh machine, you must install and configure all of the following:
-
-- Android export templates under `.xdg_data/redot/export_templates/<redot-version>/`
-- Java SDK path in Redot Editor Settings
-- Android SDK path in Redot Editor Settings, including valid `platform-tools` and `build-tools`
-
-### Add the Android launch args asset
-
-Redot's Android startup expects an `_cl_` asset that points to `res://data.pck`.
+Android:
 
 ```bash
-cd /path/to/SimRoom
-python3 platform/android/write_android_cl.py
+python3 tools/export.py android \
+  --engine ./redot.linuxbsd.editor.x86_64 \
+  --android-sdk android-sdk \
+  --verify-clean
 ```
 
-That writes `build/android_source/assets/_cl_`.
+On Windows, use the same wrapper and point `--engine` at the local Windows Redot executable:
 
-### Package the APK
+```powershell
+py tools/export.py windows --engine .\path\to\redot.exe --android-sdk .\android-sdk --verify-clean
+```
 
-Run the Gradle wrapper inside the generated Android source project:
+## Source Of Truth
+
+Desktop exports use Redot's actual CLI export commands:
+
+```text
+redot --headless --path . --export-debug <Preset> <OutputPath> --log-file <LogPath>
+```
+
+The wrapper uses that directly for:
+
+- `Linux`
+- `Windows`
+
+Android remains "as far as practical" because this repo already relies on the committed source-template helpers under [platform/android](/home/edwin/Documents/SimRoom2/platform/android):
+
+1. Redot CLI runs [platform/android/build_pck.gd](/home/edwin/Documents/SimRoom2/platform/android/build_pck.gd)
+2. the wrapper unpacks `android_source.zip`
+3. the wrapper injects `data.pck` and `_cl_`
+4. Gradle builds the debug APK
+5. `apksigner` signs the debug APK
+
+That preserves the real project workflow instead of replacing it.
+
+## Template Handling
+
+The wrapper can install extracted Redot export templates into a portable repo-local location:
 
 ```bash
-cd /path/to/SimRoom/build/android_source
-./gradlew assembleDebug
+python3 tools/export.py linux \
+  --engine ./redot.linuxbsd.editor.x86_64 \
+  --template-dir .ci/export-templates
 ```
 
-The resulting APK will be under the Gradle output tree for that generated project. Copy or publish the final APK from `build/` or your CI artifact step.
+Notes:
 
-## CI Layout Notes
+- On Linux, portable state lives under `.xdg_*`
+- On Windows, portable Redot state created by the wrapper lives under `.windows-home/`
+- both locations are ignored by git
 
-- Commit shared game code only from the repo root.
-- Keep generated SDKs, Gradle outputs, APKs, PCKs, and imported Redot cache files out of git.
-- Use `platform/android/` for Android-specific export helpers instead of mixing them into gameplay folders.
-- Preserve [run.sh](/home/edwin/Documents/SimRoom/run.sh) for local Linux development; CI can call Redot directly against the same root project.
+If templates are already installed where the wrapper expects them, `--template-dir` is optional.
+
+## Android SDK Note For Desktop Exports
+
+In this repo, passing `--android-sdk` is recommended even for Linux and Windows desktop exports.
+
+Reason:
+
+- [export_presets.cfg](/home/edwin/Documents/SimRoom2/export_presets.cfg) commits an Android export preset alongside the desktop presets
+- this Redot build validates Android export setup during desktop export startup
+- if Android SDK metadata is missing, desktop export can warn or fail before the requested target finishes exporting
+
+The desktop builds do not need Android tools as output dependencies. This is just a project-level Redot validation requirement caused by the committed Android preset.
+
+## Outputs
+
+Desktop outputs:
+
+- `build/linux/SimRoom.x86_64`
+- `build/windows/SimRoom.exe`
+- `build/logs/*.log`
+
+Android outputs:
+
+- `build/android/SimRoom.pck`
+- `build/android/SimRoom-debug.apk`
+- `build/logs/android-pack.log`
+
+All generated build outputs stay under `build/`, which is ignored by git.
+
+## Clean Working Tree Verification
+
+The wrapper supports:
+
+```bash
+python3 tools/export.py linux \
+  --engine ./redot.linuxbsd.editor.x86_64 \
+  --android-sdk android-sdk \
+  --verify-clean
+```
+
+That runs the export and fails if export steps add or change git status entries relative to the pre-export baseline. This lets you verify that exports do not create tracked noise even when you already have source edits in progress.
+
+## CI Usage
+
+GitHub Actions workflow:
+
+- [`.github/workflows/exports.yml`](/home/edwin/Documents/SimRoom2/.github/workflows/exports.yml)
+
+Current CI coverage:
+
+- Ubuntu job exporting Linux
+- Windows job exporting Windows
+- Ubuntu job exporting Android debug APK
+
+Each job downloads the matching Redot binary and templates, runs the same Python wrapper, and uploads the generated artifacts.
+
+## Platform-Specific Notes
+
+Deep-dive setup docs remain here:
+
+- [docs/build-linux.md](/home/edwin/Documents/SimRoom2/docs/build-linux.md)
+- [docs/build-windows.md](/home/edwin/Documents/SimRoom2/docs/build-windows.md)
+- [docs/build-android.md](/home/edwin/Documents/SimRoom2/docs/build-android.md)
+
+Use those when you need platform-specific prerequisites or troubleshooting details. For normal exports, prefer `tools/export.py`.

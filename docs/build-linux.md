@@ -2,6 +2,19 @@
 
 This guide explains how to run the project and export a Linux desktop build from a fresh clone.
 
+Preferred export path:
+
+```bash
+python3 tools/export.py linux \
+  --engine ./redot.linuxbsd.editor.x86_64 \
+  --android-sdk android-sdk \
+  --verify-clean
+```
+
+This document keeps the platform-specific details and troubleshooting for what that wrapper is doing underneath.
+
+Note: this repo commits an Android export preset, and this Redot build validates that preset during desktop export startup. That is why the wrapper examples include `--android-sdk android-sdk` even for Linux export.
+
 You can do this from either:
 
 - a Linux host machine

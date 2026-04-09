@@ -2,6 +2,16 @@
 
 This guide explains how to export a Windows build from the same shared Redot project.
 
+Preferred export path:
+
+```text
+py tools/export.py windows --engine .\path\to\redot.exe --android-sdk .\android-sdk --verify-clean
+```
+
+This document keeps the platform-specific details and troubleshooting for what that wrapper is doing underneath.
+
+Note: this repo commits an Android export preset, and this Redot build validates that preset during desktop export startup. That is why the wrapper examples include an Android SDK path even for Windows export.
+
 You do not need a separate Windows project. This repo already commits a `Windows` export preset in [export_presets.cfg](/home/edwin/Documents/SimRoom/export_presets.cfg).
 
 You can do this from either:

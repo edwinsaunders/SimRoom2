@@ -2,6 +2,17 @@
 
 This guide explains how to build a debug Android APK from a fresh clone.
 
+Preferred export path:
+
+```bash
+python3 tools/export.py android \
+  --engine ./redot.linuxbsd.editor.x86_64 \
+  --android-sdk android-sdk \
+  --verify-clean
+```
+
+This document keeps the platform-specific details and troubleshooting for what that wrapper is doing underneath.
+
 This repository keeps one shared Redot project and uses Android-specific helpers only in [platform/android](/home/edwin/Documents/SimRoom/platform/android). There is no separate Android game project.
 
 You can build Android from either:
