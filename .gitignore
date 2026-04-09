@@ -29,4 +29,6 @@ Redot_v26.1-stable_linux_x64.zip
 *.import
 *.uid
 *.tmp
+__pycache__/
+*.pyc
 local.properties
