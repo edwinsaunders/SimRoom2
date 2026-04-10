@@ -1,0 +1,49 @@
+[gd_scene load_steps=7 format=3]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_north"]
+size = Vector3(0.2, 4, 4.9)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_header"]
+size = Vector3(0.2, 1.2, 2.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_north"]
+size = Vector3(0.2, 4, 4.9)
+
+[sub_resource type="BoxMesh" id="BoxMesh_header"]
+size = Vector3(0.2, 1.2, 2.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wall"]
+albedo_color = Color(0.15, 0.16, 0.19, 1)
+roughness = 0.96
+
+[node name="DoorwayOpening" type="Node3D"]
+
+[node name="SharedWallNorth" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -3.55)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SharedWallNorth"]
+shape = SubResource("BoxShape3D_north")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SharedWallNorth"]
+mesh = SubResource("BoxMesh_north")
+material_override = SubResource("StandardMaterial3D_wall")
+
+[node name="SharedWallSouth" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 3.55)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SharedWallSouth"]
+shape = SubResource("BoxShape3D_north")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SharedWallSouth"]
+mesh = SubResource("BoxMesh_north")
+material_override = SubResource("StandardMaterial3D_wall")
+
+[node name="DoorHeader" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.4, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DoorHeader"]
+shape = SubResource("BoxShape3D_header")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="DoorHeader"]
+mesh = SubResource("BoxMesh_header")
+material_override = SubResource("StandardMaterial3D_wall")

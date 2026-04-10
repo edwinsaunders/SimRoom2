@@ -2,6 +2,8 @@ extends Node3D
 
 const VIEWPORT_SIZE := Vector2i(1280, 720)
 
+@onready var _screen_surface: MeshInstance3D = $ScreenSurface
+
 var _player: Node3D
 var _video_path := ""
 var _screen_size := Vector2(3.2, 1.8)
@@ -13,6 +15,7 @@ var _smoothing_speed := 8.0
 var _current_volume_db := _min_volume_db
 var _video_player: VideoStreamPlayer
 var _media_started := false
+var _initialized := false
 
 
 func configure(
@@ -34,9 +37,20 @@ func configure(
 	_max_volume_db = max_volume_db
 	_smoothing_speed = smoothing_speed
 	_current_volume_db = _min_volume_db
+	if is_node_ready():
+		_initialize_screen()
 
 
 func _ready() -> void:
+	_initialize_screen()
+
+
+func _initialize_screen() -> void:
+	if _initialized or _video_path == "":
+		return
+
+	_initialized = true
+
 	var viewport := SubViewport.new()
 	viewport.name = "VideoViewport"
 	viewport.disable_3d = true
@@ -56,11 +70,9 @@ func _ready() -> void:
 	viewport.add_child(video_player)
 	_video_player = video_player
 
-	var quad := MeshInstance3D.new()
-	quad.name = "ScreenSurface"
 	var mesh := QuadMesh.new()
 	mesh.size = _screen_size
-	quad.mesh = mesh
+	_screen_surface.mesh = mesh
 
 	var material := StandardMaterial3D.new()
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -70,8 +82,7 @@ func _ready() -> void:
 	material.emission = Color.WHITE
 	material.emission_energy_multiplier = 1.4
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	quad.material_override = material
-	add_child(quad)
+	_screen_surface.material_override = material
 
 	_start_media.call_deferred()
 

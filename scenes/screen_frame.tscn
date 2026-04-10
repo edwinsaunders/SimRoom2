@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3]
+
+[sub_resource type="BoxMesh" id="BoxMesh_2v1mg"]
+size = Vector3(3.5, 2.1, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7de0n"]
+albedo_color = Color(0.02, 0.02, 0.025, 1)
+metallic = 0.2
+roughness = 0.35
+
+[node name="ScreenFrame" type="MeshInstance3D"]
+mesh = SubResource("BoxMesh_2v1mg")
+material_override = SubResource("StandardMaterial3D_7de0n")

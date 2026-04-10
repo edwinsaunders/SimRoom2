@@ -1,9 +1,16 @@
-[gd_scene load_steps=6 format=3 uid="uid://cehqg0d1rtm5q"]
+[gd_scene load_steps=14 format=3 uid="uid://cehqg0d1rtm5q"]
 
-[ext_resource type="Script" path="res://scripts/main.gd" id="1_hfj5m"]
-[ext_resource type="Script" path="res://scripts/player.gd" id="2_s0snk"]
-[ext_resource type="Script" path="res://scripts/animated_screen.gd" id="3_n8uyi"]
-[ext_resource type="Script" path="res://scripts/mobile_controls.gd" id="4_ljv7h"]
+[ext_resource type="Script" uid="uid://dyjerurs85osa" path="res://scripts/main.gd" id="1_hfj5m"]
+[ext_resource type="Script" uid="uid://btt4kduadhrfa" path="res://scripts/player.gd" id="2_s0snk"]
+[ext_resource type="Script" uid="uid://cgwn8tq2xyrth" path="res://scripts/animated_screen.gd" id="3_n8uyi"]
+[ext_resource type="Script" uid="uid://bu3xtbyq1hb6t" path="res://scripts/mobile_controls.gd" id="4_ljv7h"]
+[ext_resource type="PackedScene" path="res://scenes/room_a_shell.tscn" id="5_6qqe1"]
+[ext_resource type="PackedScene" path="res://scenes/room_b_shell.tscn" id="6_o1n0j"]
+[ext_resource type="PackedScene" path="res://scenes/doorway_opening.tscn" id="7_n3x2r"]
+[ext_resource type="PackedScene" path="res://scenes/door.tscn" id="8_0rtpk"]
+[ext_resource type="PackedScene" path="res://scenes/screen_frame.tscn" id="9_8o2q2"]
+[ext_resource type="PackedScene" path="res://scenes/video_screen.tscn" id="10_fap8o"]
+[ext_resource type="PackedScene" path="res://scenes/program_station.tscn" id="11_wm4n0"]
 
 [sub_resource type="Environment" id="Environment_jp4p0"]
 background_mode = 1
@@ -47,11 +54,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 3.6)
 script = ExtResource("2_s0snk")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1499999, 0)
 shape = SubResource("CapsuleShape3D_4o4n8")
 
 [node name="Camera3D" type="Camera3D" parent="Player"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1418989, 0)
 current = true
 fov = 80.0
 
@@ -64,6 +71,28 @@ volume_db = -10.0
 [node name="MobileControls" type="CanvasLayer" parent="."]
 script = ExtResource("4_ljv7h")
 
+[node name="RoomA" parent="." instance=ExtResource("5_6qqe1")]
+
+[node name="RoomB" parent="." instance=ExtResource("6_o1n0j")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 0)
+
+[node name="DoorwayOpening" parent="." instance=ExtResource("7_n3x2r")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 0)
+
+[node name="Door" parent="." instance=ExtResource("8_0rtpk")]
+transform = Transform3D(1, 0, 0, 0, 1.0626848, 0, 0, 0, 1, 6, 0, -1.1)
+
+[node name="ScreenFrame" parent="." instance=ExtResource("9_8o2q2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.05, -5.93)
+
 [node name="Screen" type="MeshInstance3D" parent="."]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 2.05, -5.87)
 script = ExtResource("3_n8uyi")
+
+[node name="VideoScreen" parent="." instance=ExtResource("10_fap8o")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 2.05, -5.87)
+
+[node name="VideoScreenFrame" parent="." instance=ExtResource("9_8o2q2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 2.05, -5.93)
+
+[node name="ProgramStation" parent="." instance=ExtResource("11_wm4n0")]

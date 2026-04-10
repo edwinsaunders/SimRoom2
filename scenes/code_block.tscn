@@ -1,0 +1,35 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/code_block.gd" id="1_hl1g6"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_md5f6"]
+size = Vector3(0.8, 0.3, 0.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_qmtdf"]
+size = Vector3(0.8, 0.3, 0.8)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vr1j4"]
+albedo_color = Color(0.35, 0.75, 1, 1)
+roughness = 0.38
+
+[node name="CodeBlock" type="Node3D"]
+script = ExtResource("1_hl1g6")
+
+[node name="Body" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0)
+shape = SubResource("BoxShape3D_md5f6")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0)
+mesh = SubResource("BoxMesh_qmtdf")
+material_override = SubResource("StandardMaterial3D_vr1j4")
+
+[node name="TopLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 6.12323e-17, 1, 0, -1, 6.12323e-17, 0, 0.31, 0)
+font_size = 56
+
+[node name="FrontLabel" type="Label3D" parent="."]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0.165, -0.41)
+font_size = 38

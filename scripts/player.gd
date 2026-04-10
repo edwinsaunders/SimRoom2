@@ -7,6 +7,7 @@ const GRAVITY := 14.0
 const MOUSE_SENSITIVITY := 0.0025
 const MIN_PITCH := deg_to_rad(-85.0)
 const MAX_PITCH := deg_to_rad(85.0)
+const INTERACTION_GROUP := "world_interactables"
 const AudioLibrary = preload("res://scripts/audio_library.gd")
 
 @onready var camera: Camera3D = $Camera3D
@@ -16,6 +17,13 @@ const AudioLibrary = preload("res://scripts/audio_library.gd")
 var _pitch := 0.0
 var _mobile_controls: CanvasLayer
 var _audio_listener: AudioListener3D
+var _held_code_block: Node3D
+var _block_hold_anchor: Node3D
+var _text_edit_layer: CanvasLayer
+var _text_edit_panel: PanelContainer
+var _text_edit_field: LineEdit
+var _editing_block: Node3D
+var _is_editing_text := false
 
 
 func _ready() -> void:
@@ -23,6 +31,8 @@ func _ready() -> void:
 	land_sfx.stream = AudioLibrary.create_land_stream()
 	_mobile_controls = get_parent().get_node_or_null("MobileControls")
 	_ensure_audio_listener()
+	_ensure_block_hold_anchor()
+	_ensure_text_edit_ui()
 	if _using_mobile_controls():
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	else:
@@ -30,6 +40,11 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _is_editing_text:
+		if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
+			_close_text_edit()
+		return
+
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not _using_mobile_controls():
 		rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
 		_pitch = clamp(_pitch - event.relative.y * MOUSE_SENSITIVITY, MIN_PITCH, MAX_PITCH)
@@ -47,6 +62,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 		else:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F:
+		_try_edit_text_block()
+	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_E:
+		_try_interact()
 	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_Q and event.ctrl_pressed:
 		var root := get_parent()
 		if root != null and root.has_method("request_quit"):
@@ -56,6 +75,14 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _is_editing_text:
+		if not is_on_floor():
+			velocity.y -= GRAVITY * delta
+		else:
+			velocity = Vector3.ZERO
+		move_and_slide()
+		return
+
 	var was_on_floor := is_on_floor()
 	var previous_vertical_velocity := velocity.y
 	var input_vector := Vector2.ZERO
@@ -76,7 +103,7 @@ func _physics_process(delta: float) -> void:
 		input_vector += _mobile_controls.move_vector
 		jump_requested = jump_requested or _mobile_controls.consume_jump_requested()
 		if _mobile_controls.consume_interact_requested():
-			_try_mobile_interact()
+			_try_interact()
 
 	var direction := Vector3(input_vector.x, 0.0, input_vector.y)
 	if direction != Vector3.ZERO:
@@ -130,19 +157,53 @@ func _apply_mobile_look() -> void:
 	camera.rotation.x = _pitch
 
 
-func _try_mobile_interact() -> void:
-	var nearest_door: Node3D = null
+func hold_code_block(block: Node3D) -> bool:
+	if block == null:
+		return false
+
+	if _held_code_block != null and _held_code_block != block:
+		return false
+
+	_held_code_block = block
+	if _held_code_block.has_method("pick_up"):
+		_held_code_block.pick_up(_block_hold_anchor)
+	return true
+
+
+func peek_held_code_block() -> Node3D:
+	return _held_code_block
+
+
+func consume_held_code_block() -> Node3D:
+	var block := _held_code_block
+	_held_code_block = null
+	return block
+
+
+func _try_edit_text_block() -> void:
+	var target_block := _held_code_block
+	if target_block == null or not target_block.has_method("can_edit_text") or not target_block.can_edit_text():
+		target_block = _find_nearest_editable_block()
+
+	if target_block == null:
+		return
+
+	_open_text_edit(target_block)
+
+
+func _try_interact() -> void:
+	var nearest_interactable: Node3D = null
 	var nearest_distance := INF
 
-	for door in get_tree().get_nodes_in_group("doors"):
-		if door.has_method("can_interact") and door.can_interact(self):
-			var distance: float = global_position.distance_to(door.global_position)
+	for interactable in get_tree().get_nodes_in_group(INTERACTION_GROUP):
+		if interactable.has_method("can_interact") and interactable.can_interact(self):
+			var distance: float = global_position.distance_to(interactable.global_position)
 			if distance < nearest_distance:
 				nearest_distance = distance
-				nearest_door = door
+				nearest_interactable = interactable
 
-	if nearest_door != null and nearest_door.has_method("try_interact"):
-		nearest_door.try_interact(self)
+	if nearest_interactable != null and nearest_interactable.has_method("try_interact"):
+		nearest_interactable.try_interact(self)
 
 
 func _using_mobile_controls() -> bool:
@@ -157,3 +218,104 @@ func _ensure_audio_listener() -> void:
 		camera.add_child(_audio_listener)
 
 	_audio_listener.make_current()
+
+
+func _ensure_block_hold_anchor() -> void:
+	_block_hold_anchor = camera.get_node_or_null("BlockHoldAnchor")
+	if _block_hold_anchor == null:
+		_block_hold_anchor = Node3D.new()
+		_block_hold_anchor.name = "BlockHoldAnchor"
+		_block_hold_anchor.position = Vector3.ZERO
+		camera.add_child(_block_hold_anchor)
+
+
+func _ensure_text_edit_ui() -> void:
+	_text_edit_layer = CanvasLayer.new()
+	_text_edit_layer.name = "TextEditLayer"
+	_text_edit_layer.layer = 20
+	_text_edit_layer.visible = false
+	add_child(_text_edit_layer)
+
+	var root := Control.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_text_edit_layer.add_child(root)
+
+	var shade := ColorRect.new()
+	shade.color = Color(0.02, 0.03, 0.05, 0.72)
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_child(shade)
+
+	_text_edit_panel = PanelContainer.new()
+	_text_edit_panel.custom_minimum_size = Vector2(520.0, 120.0)
+	_text_edit_panel.anchor_left = 0.5
+	_text_edit_panel.anchor_top = 0.5
+	_text_edit_panel.anchor_right = 0.5
+	_text_edit_panel.anchor_bottom = 0.5
+	_text_edit_panel.offset_left = -260.0
+	_text_edit_panel.offset_top = -60.0
+	_text_edit_panel.offset_right = 260.0
+	_text_edit_panel.offset_bottom = 60.0
+	root.add_child(_text_edit_panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	_text_edit_panel.add_child(margin)
+
+	var layout := VBoxContainer.new()
+	margin.add_child(layout)
+
+	var hint := Label.new()
+	hint.text = "EDIT TEXT BLOCK  ENTER: SAVE  ESC: CANCEL"
+	layout.add_child(hint)
+
+	_text_edit_field = LineEdit.new()
+	_text_edit_field.placeholder_text = "Type program output text"
+	_text_edit_field.text_submitted.connect(_submit_text_edit)
+	layout.add_child(_text_edit_field)
+
+
+func _open_text_edit(block: Node3D) -> void:
+	_editing_block = block
+	_is_editing_text = true
+	_text_edit_layer.visible = true
+	if _editing_block != null and _editing_block.has_method("get_block_text"):
+		_text_edit_field.text = _editing_block.get_block_text()
+	else:
+		_text_edit_field.text = ""
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_text_edit_field.grab_focus()
+	_text_edit_field.select_all()
+
+
+func _submit_text_edit(_submitted_text: String) -> void:
+	if _editing_block != null and _editing_block.has_method("set_block_text"):
+		_editing_block.set_block_text(_text_edit_field.text)
+	_close_text_edit()
+
+
+func _close_text_edit() -> void:
+	_editing_block = null
+	_is_editing_text = false
+	_text_edit_layer.visible = false
+	_text_edit_field.release_focus()
+	if not _using_mobile_controls():
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+func _find_nearest_editable_block() -> Node3D:
+	var nearest_block: Node3D = null
+	var nearest_distance := INF
+
+	for interactable in get_tree().get_nodes_in_group(INTERACTION_GROUP):
+		if interactable.has_method("can_edit_text") and interactable.can_edit_text():
+			if interactable.has_method("can_interact") and not interactable.can_interact(self):
+				continue
+			var distance: float = global_position.distance_to(interactable.global_position)
+			if distance < nearest_distance:
+				nearest_distance = distance
+				nearest_block = interactable
+
+	return nearest_block

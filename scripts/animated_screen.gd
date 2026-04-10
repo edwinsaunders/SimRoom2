@@ -4,9 +4,15 @@ const TEXTURE_WIDTH := 160
 const TEXTURE_HEIGHT := 90
 const PIXEL_SIZE := 4
 const LOOP_SECONDS := 3.0
+const VIEWPORT_SIZE := Vector2i(640, 360)
 
 var _image: Image
 var _texture: ImageTexture
+var _viewport: SubViewport
+var _texture_rect: TextureRect
+var _message_label: Label
+var _background_rect: ColorRect
+var _message_active := false
 var _palette := [
 	Color8(0, 229, 255),
 	Color8(255, 67, 208),
@@ -23,15 +29,18 @@ func _ready() -> void:
 
 	_image = Image.create(TEXTURE_WIDTH, TEXTURE_HEIGHT, false, Image.FORMAT_RGBA8)
 	_texture = ImageTexture.create_from_image(_image)
+	_build_viewport()
 
 	var material := StandardMaterial3D.new()
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.albedo_texture = _texture
-	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	material.albedo_texture = _viewport.get_texture()
+	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR
 	material.emission_enabled = true
-	material.emission_texture = _texture
+	material.emission_texture = _viewport.get_texture()
 	material.emission = Color.WHITE
 	material.emission_energy_multiplier = 2.8
+	material.uv1_scale = Vector3(-1.0, 1.0, 1.0)
+	material.uv1_offset = Vector3(1.0, 0.0, 0.0)
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	material.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
 	material_override = material
@@ -41,9 +50,60 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	if _message_active:
+		return
+
 	var loop_t := fposmod(Time.get_ticks_msec() / 1000.0, LOOP_SECONDS) / LOOP_SECONDS
 	_draw_frame(loop_t)
 	_texture.update(_image)
+
+
+func show_program_message(message: String, success: bool) -> void:
+	_message_active = true
+	_texture_rect.visible = false
+	_message_label.visible = true
+	_background_rect.color = Color(0.02, 0.12, 0.08, 1.0) if success else Color(0.14, 0.03, 0.03, 1.0)
+	_message_label.text = message
+	_message_label.modulate = Color(0.82, 1.0, 0.88, 1.0) if success else Color(1.0, 0.76, 0.76, 1.0)
+
+
+func clear_program_message() -> void:
+	_message_active = false
+	_texture_rect.visible = true
+	_message_label.visible = false
+
+
+func _build_viewport() -> void:
+	_viewport = SubViewport.new()
+	_viewport.name = "ScreenViewport"
+	_viewport.disable_3d = true
+	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	_viewport.size = VIEWPORT_SIZE
+	add_child(_viewport)
+
+	var root := Control.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_viewport.add_child(root)
+
+	_background_rect = ColorRect.new()
+	_background_rect.color = Color(0.02, 0.02, 0.045, 1.0)
+	_background_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_child(_background_rect)
+
+	_texture_rect = TextureRect.new()
+	_texture_rect.texture = _texture
+	_texture_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_texture_rect.stretch_mode = TextureRect.STRETCH_SCALE
+	root.add_child(_texture_rect)
+
+	_message_label = Label.new()
+	_message_label.visible = false
+	_message_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_message_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_message_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_message_label.add_theme_font_size_override("font_size", 54)
+	root.add_child(_message_label)
 
 
 func _draw_frame(loop_t: float) -> void:
