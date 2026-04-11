@@ -1,0 +1,94 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://poc/scripts/poc_station.gd" id="1_75jc8"]
+[ext_resource type="PackedScene" path="res://poc/scenes/poc_button.tscn" id="2_nj0nu"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_base"]
+size = Vector3(5.4, 0.4, 2.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_console"]
+size = Vector3(5.0, 0.8, 1.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_base"]
+size = Vector3(5.4, 0.4, 2.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_console"]
+size = Vector3(5.0, 0.8, 1.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_base"]
+albedo_color = Color(0.12, 0.13, 0.16, 1)
+roughness = 0.92
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_console"]
+albedo_color = Color(0.17, 0.19, 0.24, 1)
+roughness = 0.86
+
+[node name="PocStation" type="Node3D"]
+script = ExtResource("1_75jc8")
+screen_path = NodePath("../PocScreen")
+
+[node name="Base" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.2, 0)
+mesh = SubResource("BoxMesh_base")
+material_override = SubResource("StandardMaterial3D_base")
+
+[node name="BaseBody" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BaseBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+shape = SubResource("BoxShape3D_base")
+
+[node name="Console" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.8, -0.2)
+mesh = SubResource("BoxMesh_console")
+material_override = SubResource("StandardMaterial3D_console")
+
+[node name="ConsoleBody" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ConsoleBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, -0.2)
+shape = SubResource("BoxShape3D_console")
+
+[node name="StatusLabel3D" type="Label3D" parent="."]
+position = Vector3(0, 1.55, 0.8)
+rotation = Vector3(-0.20944, 3.14159, 0)
+font_size = 36
+outline_size = 8
+modulate = Color(0.88, 0.96, 1, 1)
+text = "BUILD PROGRAM: E ON BUTTONS"
+
+[node name="MoveLeftButton" parent="." instance=ExtResource("2_nj0nu")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.9, 1.24, 0.18)
+button_action = "MOVE_LEFT"
+button_label = "MOVE LEFT"
+base_color = Color(0.28, 0.45, 0.82, 1)
+
+[node name="WaitButton" parent="." instance=ExtResource("2_nj0nu")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.65, 1.24, 0.18)
+button_action = "WAIT"
+button_label = "WAIT"
+base_color = Color(0.36, 0.36, 0.5, 1)
+
+[node name="SetColorButton" parent="." instance=ExtResource("2_nj0nu")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.65, 1.24, 0.18)
+button_action = "SET_COLOR"
+button_label = "SET COLOR"
+base_color = Color(0.85, 0.54, 0.16, 1)
+
+[node name="MoveRightButton" parent="." instance=ExtResource("2_nj0nu")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9, 1.24, 0.18)
+button_action = "MOVE_RIGHT"
+button_label = "MOVE RIGHT"
+base_color = Color(0.28, 0.72, 0.82, 1)
+
+[node name="RunButton" parent="." instance=ExtResource("2_nj0nu")]
+transform = Transform3D(0.9, 0, 0, 0, 1, 0, 0, 0, 0.9, -0.72, 1.24, -0.72)
+button_action = "RUN"
+button_label = "RUN"
+base_color = Color(0.18, 0.68, 0.28, 1)
+
+[node name="ResetButton" parent="." instance=ExtResource("2_nj0nu")]
+transform = Transform3D(0.9, 0, 0, 0, 1, 0, 0, 0, 0.9, 0.72, 1.24, -0.72)
+button_action = "RESET"
+button_label = "RESET"
+base_color = Color(0.82, 0.25, 0.22, 1)

@@ -1,17 +1,18 @@
-[gd_scene load_steps=15 format=3 uid="uid://cehqg0d1rtm5q"]
+[gd_scene load_steps=16 format=3 uid="uid://cehqg0d1rtm5q"]
 
 [ext_resource type="Script" uid="uid://dyjerurs85osa" path="res://scripts/main.gd" id="1_hfj5m"]
 [ext_resource type="Script" uid="uid://btt4kduadhrfa" path="res://scripts/player.gd" id="2_s0snk"]
 [ext_resource type="Script" uid="uid://cgwn8tq2xyrth" path="res://scripts/animated_screen.gd" id="3_n8uyi"]
 [ext_resource type="Script" uid="uid://bu3xtbyq1hb6t" path="res://scripts/mobile_controls.gd" id="4_ljv7h"]
 [ext_resource type="PackedScene" path="res://scenes/room_a_shell.tscn" id="5_6qqe1"]
-[ext_resource type="PackedScene" path="res://scenes/room_b_shell.tscn" id="6_o1n0j"]
+[ext_resource type="PackedScene" path="res://scenes/room_mid_shell.tscn" id="6_o1n0j"]
 [ext_resource type="PackedScene" path="res://scenes/doorway_opening.tscn" id="7_n3x2r"]
 [ext_resource type="PackedScene" path="res://scenes/door.tscn" id="8_0rtpk"]
 [ext_resource type="PackedScene" path="res://scenes/screen_frame.tscn" id="9_8o2q2"]
 [ext_resource type="PackedScene" path="res://scenes/video_screen.tscn" id="10_fap8o"]
 [ext_resource type="PackedScene" uid="uid://duv1yguc6pl46" path="res://scenes/program_station.tscn" id="11_wm4n0"]
 [ext_resource type="PackedScene" path="res://scenes/cat.tscn" id="12_2wle0"]
+[ext_resource type="PackedScene" path="res://poc/scenes/prototype_annex.tscn" id="13_sqk5s"]
 
 [sub_resource type="Environment" id="Environment_jp4p0"]
 background_mode = 1
@@ -100,3 +101,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 2.05, -5.93)
 
 [node name="Cat" parent="." instance=ExtResource("12_2wle0")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0.48877636, -0.5)
+
+[node name="PrototypeDoorway" parent="." instance=ExtResource("7_n3x2r")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, 0)
+
+[node name="PrototypeDoor" parent="." instance=ExtResource("8_0rtpk")]
+transform = Transform3D(1, 0, 0, 0, 1.0626848, 0, 0, 0, 1, 18, 0, -1.1)
+
+[node name="PrototypeAnnex" parent="." instance=ExtResource("13_sqk5s")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0, 0)

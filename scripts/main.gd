@@ -16,6 +16,7 @@ const PROGRAM_INTERACTION_DISTANCE := 2.4
 @onready var player: CharacterBody3D = $Player
 @onready var wall_screen: MeshInstance3D = $Screen
 @onready var door: Node3D = $Door
+@onready var prototype_door: Node3D = $PrototypeDoor
 @onready var video_screen: Node3D = $VideoScreen
 @onready var program_station: Node3D = $ProgramStation
 
@@ -62,6 +63,7 @@ func _exit_tree() -> void:
 
 func _configure_scene() -> void:
 	door.configure(player, DOOR_INTERACTION_DISTANCE, DOOR_OPEN_ANGLE, DOOR_ANIMATION_DURATION)
+	prototype_door.configure(player, DOOR_INTERACTION_DISTANCE, DOOR_OPEN_ANGLE, DOOR_ANIMATION_DURATION)
 	video_screen.configure(
 		player,
 		"res://output.ogv",
