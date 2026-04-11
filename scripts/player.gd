@@ -9,6 +9,7 @@ const MOUSE_SENSITIVITY := 0.0025
 const MIN_PITCH := deg_to_rad(-85.0)
 const MAX_PITCH := deg_to_rad(85.0)
 const INTERACTION_GROUP := "world_interactables"
+const TARGETED_INTERACTION_DISTANCE := 4.8
 const CROUCH_CAMERA_OFFSET := -0.65
 const CROUCH_CAPSULE_HEIGHT := 0.9
 const CROUCH_TRANSITION_SPEED := 10.0
@@ -31,6 +32,7 @@ var _editing_block: Node3D
 var _is_editing_text := false
 var _standing_camera_height := 0.0
 var _standing_capsule_height := 0.0
+var _crosshair_layer: CanvasLayer
 
 
 func _ready() -> void:
@@ -42,11 +44,14 @@ func _ready() -> void:
 	_mobile_controls = get_parent().get_node_or_null("MobileControls")
 	_ensure_audio_listener()
 	_ensure_block_hold_anchor()
+	_ensure_crosshair_ui()
 	_ensure_text_edit_ui()
 	if _using_mobile_controls():
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		_crosshair_layer.visible = false
 	else:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		_crosshair_layer.visible = true
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -60,13 +65,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		_pitch = clamp(_pitch - event.relative.y * MOUSE_SENSITIVITY, MIN_PITCH, MAX_PITCH)
 		camera.rotation.x = _pitch
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and not _using_mobile_controls():
-		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+			_try_targeted_interact()
+		else:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+			_crosshair_layer.visible = true
 	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE and not _using_mobile_controls():
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+			_crosshair_layer.visible = false
 		else:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+			_crosshair_layer.visible = true
 	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F11:
 		if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
@@ -230,6 +240,8 @@ func _try_interact() -> void:
 	var nearest_distance := INF
 
 	for interactable in get_tree().get_nodes_in_group(INTERACTION_GROUP):
+		if _prefers_targeted_interaction(interactable):
+			continue
 		if interactable.has_method("can_interact") and interactable.can_interact(self):
 			var distance: float = global_position.distance_to(interactable.global_position)
 			if distance < nearest_distance:
@@ -240,8 +252,45 @@ func _try_interact() -> void:
 		nearest_interactable.try_interact(self)
 
 
+func _try_targeted_interact() -> void:
+	var interactable := _find_targeted_interactable()
+	if interactable != null and interactable.has_method("try_interact"):
+		interactable.try_interact(self)
+
+
 func _using_mobile_controls() -> bool:
 	return _mobile_controls != null and _mobile_controls.visible
+
+
+func _find_targeted_interactable() -> Node3D:
+	var from := camera.global_position
+	var to := from + -camera.global_transform.basis.z * TARGETED_INTERACTION_DISTANCE
+	var query := PhysicsRayQueryParameters3D.create(from, to)
+	query.exclude = [self]
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+
+	# The POC buttons use a non-blocking collision layer so they can be clicked
+	# precisely without interfering with player or cat movement.
+	var result := get_world_3d().direct_space_state.intersect_ray(query)
+	if result.is_empty():
+		return null
+
+	var collider := result.get("collider") as Node
+	if collider == null:
+		return null
+
+	var current: Node = collider
+	while current != null:
+		if current.is_in_group(INTERACTION_GROUP):
+			return current as Node3D
+		current = current.get_parent()
+
+	return null
+
+
+func _prefers_targeted_interaction(interactable: Node) -> bool:
+	return interactable != null and interactable.has_method("prefers_targeted_interaction") and interactable.prefers_targeted_interaction()
 
 
 func _ensure_audio_listener() -> void:
@@ -261,6 +310,45 @@ func _ensure_block_hold_anchor() -> void:
 		_block_hold_anchor.name = "BlockHoldAnchor"
 		_block_hold_anchor.position = Vector3.ZERO
 		camera.add_child(_block_hold_anchor)
+
+
+func _ensure_crosshair_ui() -> void:
+	_crosshair_layer = CanvasLayer.new()
+	_crosshair_layer.name = "CrosshairLayer"
+	_crosshair_layer.layer = 15
+	_crosshair_layer.visible = false
+	add_child(_crosshair_layer)
+
+	var root := Control.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_crosshair_layer.add_child(root)
+
+	var horizontal := ColorRect.new()
+	horizontal.color = Color(0.9, 0.96, 1.0, 0.9)
+	horizontal.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	horizontal.anchor_left = 0.5
+	horizontal.anchor_top = 0.5
+	horizontal.anchor_right = 0.5
+	horizontal.anchor_bottom = 0.5
+	horizontal.offset_left = -9.0
+	horizontal.offset_top = -1.0
+	horizontal.offset_right = 9.0
+	horizontal.offset_bottom = 1.0
+	root.add_child(horizontal)
+
+	var vertical := ColorRect.new()
+	vertical.color = Color(0.9, 0.96, 1.0, 0.9)
+	vertical.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vertical.anchor_left = 0.5
+	vertical.anchor_top = 0.5
+	vertical.anchor_right = 0.5
+	vertical.anchor_bottom = 0.5
+	vertical.offset_left = -1.0
+	vertical.offset_top = -9.0
+	vertical.offset_right = 1.0
+	vertical.offset_bottom = 9.0
+	root.add_child(vertical)
 
 
 func _ensure_text_edit_ui() -> void:
@@ -315,6 +403,7 @@ func _open_text_edit(block: Node3D) -> void:
 	_editing_block = block
 	_is_editing_text = true
 	_text_edit_layer.visible = true
+	_crosshair_layer.visible = false
 	if _editing_block != null and _editing_block.has_method("get_block_text"):
 		_text_edit_field.text = _editing_block.get_block_text()
 	else:
@@ -337,6 +426,7 @@ func _close_text_edit() -> void:
 	_text_edit_field.release_focus()
 	if not _using_mobile_controls():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		_crosshair_layer.visible = true
 
 
 func _find_nearest_editable_block() -> Node3D:

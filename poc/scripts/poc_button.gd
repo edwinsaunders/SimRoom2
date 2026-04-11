@@ -4,7 +4,7 @@ const INTERACTION_GROUP := "world_interactables"
 
 @export var button_action := "MOVE_RIGHT"
 @export var button_label := "MOVE RIGHT"
-@export var interaction_distance := 2.6
+@export var interaction_distance := 4.2
 @export var base_color := Color(0.22, 0.24, 0.32, 1.0)
 
 @onready var label_3d: Label3D = $Label3D
@@ -30,6 +30,10 @@ func set_station(station: Node3D) -> void:
 
 func can_interact(player: Node3D) -> bool:
 	return player != null and global_position.distance_to(player.global_position) <= interaction_distance
+
+
+func prefers_targeted_interaction() -> bool:
+	return true
 
 
 func try_interact(player: Node3D) -> bool:
