@@ -2,15 +2,20 @@ extends CharacterBody3D
 
 const MOVE_SPEED := 4.8
 const RUN_MULTIPLIER := 1.75
+const CROUCH_SPEED_MULTIPLIER := 0.55
 const JUMP_VELOCITY := 5.2
 const GRAVITY := 14.0
 const MOUSE_SENSITIVITY := 0.0025
 const MIN_PITCH := deg_to_rad(-85.0)
 const MAX_PITCH := deg_to_rad(85.0)
 const INTERACTION_GROUP := "world_interactables"
+const CROUCH_CAMERA_OFFSET := -0.65
+const CROUCH_CAPSULE_HEIGHT := 0.9
+const CROUCH_TRANSITION_SPEED := 10.0
 const AudioLibrary = preload("res://scripts/audio_library.gd")
 
 @onready var camera: Camera3D = $Camera3D
+@onready var collision_shape: CollisionShape3D = $CollisionShape3D
 @onready var jump_sfx: AudioStreamPlayer = $JumpSfx
 @onready var land_sfx: AudioStreamPlayer = $LandSfx
 
@@ -24,11 +29,16 @@ var _text_edit_panel: PanelContainer
 var _text_edit_field: LineEdit
 var _editing_block: Node3D
 var _is_editing_text := false
+var _standing_camera_height := 0.0
+var _standing_capsule_height := 0.0
 
 
 func _ready() -> void:
 	jump_sfx.stream = AudioLibrary.create_jump_stream()
 	land_sfx.stream = AudioLibrary.create_land_stream()
+	_standing_camera_height = camera.position.y
+	if collision_shape.shape is CapsuleShape3D:
+		_standing_capsule_height = collision_shape.shape.height
 	_mobile_controls = get_parent().get_node_or_null("MobileControls")
 	_ensure_audio_listener()
 	_ensure_block_hold_anchor()
@@ -76,6 +86,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	if _is_editing_text:
+		_update_crouch_state(false, delta)
 		if not is_on_floor():
 			velocity.y -= GRAVITY * delta
 		else:
@@ -87,6 +98,7 @@ func _physics_process(delta: float) -> void:
 	var previous_vertical_velocity := velocity.y
 	var input_vector := Vector2.ZERO
 	var jump_requested := Input.is_physical_key_pressed(KEY_SPACE)
+	var crouch_requested := Input.is_physical_key_pressed(KEY_CTRL)
 
 	_apply_mobile_look()
 
@@ -115,6 +127,8 @@ func _physics_process(delta: float) -> void:
 	var speed := MOVE_SPEED
 	if Input.is_physical_key_pressed(KEY_SHIFT):
 		speed *= RUN_MULTIPLIER
+	if crouch_requested:
+		speed *= CROUCH_SPEED_MULTIPLIER
 
 	velocity.x = direction.x * speed
 	velocity.z = direction.z * speed
@@ -128,6 +142,7 @@ func _physics_process(delta: float) -> void:
 		velocity.y = 0.0
 
 	move_and_slide()
+	_update_crouch_state(crouch_requested, delta)
 
 	if not was_on_floor and is_on_floor() and previous_vertical_velocity < -2.5:
 		land_sfx.play()
@@ -155,6 +170,25 @@ func _apply_mobile_look() -> void:
 	rotate_y(-look_delta.x * MOUSE_SENSITIVITY)
 	_pitch = clamp(_pitch - look_delta.y * MOUSE_SENSITIVITY, MIN_PITCH, MAX_PITCH)
 	camera.rotation.x = _pitch
+
+
+func _update_crouch_state(crouch_requested: bool, delta: float) -> void:
+	var target_camera_height := _standing_camera_height
+	if crouch_requested:
+		target_camera_height += CROUCH_CAMERA_OFFSET
+
+	camera.position.y = move_toward(camera.position.y, target_camera_height, CROUCH_TRANSITION_SPEED * delta)
+
+	var capsule := collision_shape.shape as CapsuleShape3D
+	if capsule == null:
+		return
+
+	var target_capsule_height := _standing_capsule_height
+	if crouch_requested:
+		target_capsule_height = CROUCH_CAPSULE_HEIGHT
+
+	capsule.height = move_toward(capsule.height, target_capsule_height, CROUCH_TRANSITION_SPEED * delta)
+	collision_shape.position.y = capsule.radius + capsule.height * 0.5
 
 
 func hold_code_block(block: Node3D) -> bool:
