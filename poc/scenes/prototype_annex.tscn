@@ -1,19 +1,32 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/room_b_shell.tscn" id="1_68oro"]
 [ext_resource type="PackedScene" path="res://scenes/screen_frame.tscn" id="2_g1c43"]
 [ext_resource type="PackedScene" path="res://poc/scenes/poc_screen.tscn" id="3_o6q7h"]
 [ext_resource type="PackedScene" path="res://poc/scenes/poc_station.tscn" id="4_l8r7h"]
+[ext_resource type="PackedScene" path="res://scenes/ceiling_light_fixture.tscn" id="5_p2t3f"]
 
 [node name="PrototypeAnnex" type="Node3D"]
 
 [node name="RoomShell" parent="." instance=ExtResource("1_68oro")]
 
 [node name="RoomLight" type="OmniLight3D" parent="."]
-position = Vector3(0, 3, 0)
+position = Vector3(-2.6, 3.15, -1.7)
 light_color = Color(0.564706, 0.780392, 1, 1)
 light_energy = 2.5
 omni_range = 18.0
+
+[node name="RoomAccentLight" type="OmniLight3D" parent="."]
+position = Vector3(2.6, 3.15, 1.7)
+light_color = Color(0.564706, 0.780392, 1, 1)
+light_energy = 0.7
+omni_range = 7.5
+
+[node name="RoomFixtureA" parent="." instance=ExtResource("5_p2t3f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 3.48, -1.7)
+
+[node name="RoomFixtureB" parent="." instance=ExtResource("5_p2t3f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 3.48, 1.7)
 
 [node name="ScreenFrame" parent="." instance=ExtResource("2_g1c43")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.05, -5.93)
