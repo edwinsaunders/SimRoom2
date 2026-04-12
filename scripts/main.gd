@@ -27,6 +27,8 @@ const CEILING_TILE_SIZE := 1.6
 @onready var player: CharacterBody3D = $Player
 @onready var wall_screen: MeshInstance3D = $Screen
 @onready var room_a: Node3D = $RoomA
+@onready var upper_room: Node3D = $UpperRoom
+@onready var staircase_up: Node3D = $StaircaseUp
 @onready var room_b: Node3D = $RoomB
 @onready var doorway_opening: Node3D = $DoorwayOpening
 @onready var door: Node3D = $Door
@@ -103,7 +105,7 @@ func _apply_backrooms_wall_material() -> void:
 	if _wall_material == null:
 		return
 
-	for root in [room_a, room_b, doorway_opening, prototype_doorway, prototype_annex]:
+	for root in [room_a, upper_room, staircase_up, room_b, doorway_opening, prototype_doorway, prototype_annex]:
 		_apply_wall_material_recursive(root)
 
 
@@ -133,7 +135,7 @@ func _apply_backrooms_floor_and_ceiling_materials() -> void:
 	_floor_material = _build_surface_material(FLOOR_COLOR_PATH, FLOOR_NORMAL_PATH, FLOOR_ROUGHNESS_PATH)
 	_ceiling_material = _build_surface_material(CEILING_COLOR_PATH, CEILING_NORMAL_PATH, CEILING_ROUGHNESS_PATH)
 
-	for root in [room_a, room_b, prototype_annex]:
+	for root in [room_a, upper_room, staircase_up, room_b, prototype_annex]:
 		_apply_surface_material_recursive(root)
 
 

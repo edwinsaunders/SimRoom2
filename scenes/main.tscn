@@ -1,10 +1,10 @@
-[gd_scene load_steps=16 format=3 uid="uid://cehqg0d1rtm5q"]
+[gd_scene load_steps=19 format=3 uid="uid://cehqg0d1rtm5q"]
 
 [ext_resource type="Script" uid="uid://dyjerurs85osa" path="res://scripts/main.gd" id="1_hfj5m"]
 [ext_resource type="Script" uid="uid://btt4kduadhrfa" path="res://scripts/player.gd" id="2_s0snk"]
 [ext_resource type="Script" uid="uid://cgwn8tq2xyrth" path="res://scripts/animated_screen.gd" id="3_n8uyi"]
 [ext_resource type="Script" uid="uid://bu3xtbyq1hb6t" path="res://scripts/mobile_controls.gd" id="4_ljv7h"]
-[ext_resource type="PackedScene" path="res://scenes/room_a_shell.tscn" id="5_6qqe1"]
+[ext_resource type="PackedScene" uid="uid://c8p6d7nxfix4s" path="res://scenes/room_a_shell.tscn" id="5_6qqe1"]
 [ext_resource type="PackedScene" path="res://scenes/room_mid_shell.tscn" id="6_o1n0j"]
 [ext_resource type="PackedScene" path="res://scenes/doorway_opening.tscn" id="7_n3x2r"]
 [ext_resource type="PackedScene" path="res://scenes/door.tscn" id="8_0rtpk"]
@@ -14,6 +14,8 @@
 [ext_resource type="PackedScene" uid="uid://beio6mgh58hty" path="res://scenes/cat.tscn" id="12_2wle0"]
 [ext_resource type="PackedScene" path="res://poc/scenes/prototype_annex.tscn" id="13_sqk5s"]
 [ext_resource type="PackedScene" path="res://scenes/ceiling_light_fixture.tscn" id="14_h1b7d"]
+[ext_resource type="PackedScene" path="res://scenes/room_upper_shell.tscn" id="15_q8h2j"]
+[ext_resource type="PackedScene" path="res://scenes/staircase_up.tscn" id="16_d6m1r"]
 
 [sub_resource type="Environment" id="Environment_jp4p0"]
 background_mode = 1
@@ -73,6 +75,24 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.4, 3.48, -1.7)
 [node name="RoomBFixtureB" parent="." instance=ExtResource("14_h1b7d")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.6, 3.48, 1.7)
 
+[node name="UpperRoomFillLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 7.15, -1.7)
+light_color = Color(0.564706, 0.780392, 1, 1)
+light_energy = 2.5
+omni_range = 18.0
+
+[node name="UpperRoomAccentLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 7.15, 1.7)
+light_color = Color(0.564706, 0.780392, 1, 1)
+light_energy = 0.7
+omni_range = 7.5
+
+[node name="UpperRoomFixtureA" parent="." instance=ExtResource("14_h1b7d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 7.48, -1.7)
+
+[node name="UpperRoomFixtureB" parent="." instance=ExtResource("14_h1b7d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 7.48, 1.7)
+
 [node name="Music" type="AudioStreamPlayer" parent="."]
 volume_db = -20.0
 
@@ -99,6 +119,12 @@ volume_db = -10.0
 script = ExtResource("4_ljv7h")
 
 [node name="RoomA" parent="." instance=ExtResource("5_6qqe1")]
+
+[node name="UpperRoom" parent="." instance=ExtResource("15_q8h2j")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+
+[node name="StaircaseUp" parent="." instance=ExtResource("16_d6m1r")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 0)
 
 [node name="RoomB" parent="." instance=ExtResource("6_o1n0j")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 0)
