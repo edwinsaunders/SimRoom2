@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://8qjlg6o1q6cg"]
+[gd_scene load_steps=17 format=3 uid="uid://8qjlg6o1q6cg"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
 size = Vector3(4.8, 0.2, 12)
@@ -34,7 +34,7 @@ size = Vector3(0.2, 8, 12)
 size = Vector3(0.2, 8, 12)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ramp"]
-size = Vector3(2.1, 0.35, 9.4)
+size = Vector3(2.1, 0.35, 8.393847)
 
 [sub_resource type="BoxMesh" id="BoxMesh_ramp"]
 size = Vector3(2.1, 0.35, 9.4)
@@ -47,7 +47,10 @@ roughness = 0.92
 size = Vector3(2.1, 0.35, 3)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_landing"]
-size = Vector3(2.1, 0.35, 3)
+size = Vector3(2.1, 0.35, 2.7608643)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ramp_rail"]
+size = Vector3(0.18, 1.2, 5.487502)
 
 [node name="StaircaseUp" type="Node3D"]
 
@@ -105,22 +108,28 @@ mesh = SubResource("BoxMesh_wall_ew")
 [node name="RampBody" type="StaticBody3D" parent="."]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="RampBody"]
-transform = Transform3D(0.99999994, 0, 0, 0, 0.6863913, -0.52688915, 0, 0.6003511, 0.6024013, 0.90190566, 1.4543984, 0.49038494)
+transform = Transform3D(1, 0, 0, 0, 0.75270784, -0.6583547, 0, 0.6583547, 0.75270784, 0.90190566, 1.1240895, 0.9783164)
 shape = SubResource("BoxShape3D_ramp")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="RampBody"]
-transform = Transform3D(0.99999994, 0, 0, 0, 0.6863913, -0.52688915, 0, 0.6003511, 0.6024013, 0.90190566, 1.454813, 0.49051952)
+transform = Transform3D(0.99999994, 0, 0, 0, 0.6863913, -0.52688915, 0, 0.6003511, 0.6024013, 0.90190566, 1.4557066, 0.59978175)
 material_override = SubResource("StandardMaterial3D_floor")
 mesh = SubResource("BoxMesh_ramp")
 
 [node name="TopLanding" type="StaticBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1.1933024, 0, 0, 0.7417617)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.7417617)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="TopLanding"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1.1382781, 0.92, 3.8768847, -4.2163363)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1.1382781, 0.92, 3.8768847, -4.541276)
 material_override = SubResource("StandardMaterial3D_landing")
 mesh = SubResource("BoxMesh_landing")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="TopLanding"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1.1382781, 0.91969657, 3.8765182, -4.2162337)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.91969657, 3.8765182, -4.2643576)
 shape = SubResource("BoxShape3D_landing")
+
+[node name="RampRailBlocker" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RampRailBlocker"]
+transform = Transform3D(1, 0, 0, 0, 0.7527078, -0.65835476, 0, 0.65835476, 0.7527078, 1.5555506, 2.3885138, 0.048471235)
+shape = SubResource("BoxShape3D_ramp_rail")

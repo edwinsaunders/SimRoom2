@@ -248,7 +248,11 @@ func _make_tiled_plane_material(mesh_instance: MeshInstance3D, source_material: 
 
 func _is_floor_mesh(node: MeshInstance3D) -> bool:
 	var parent := node.get_parent()
-	return parent != null and String(parent.name) == "Floor"
+	if parent == null:
+		return false
+
+	var parent_name := String(parent.name)
+	return parent_name == "Floor" or parent_name == "TopLanding" or parent_name == "RampBody"
 
 
 func _is_ceiling_mesh(node: MeshInstance3D) -> bool:
