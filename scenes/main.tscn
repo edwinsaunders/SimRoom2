@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://cehqg0d1rtm5q"]
+[gd_scene load_steps=20 format=3 uid="uid://cehqg0d1rtm5q"]
 
 [ext_resource type="Script" uid="uid://dyjerurs85osa" path="res://scripts/main.gd" id="1_hfj5m"]
 [ext_resource type="Script" uid="uid://btt4kduadhrfa" path="res://scripts/player.gd" id="2_s0snk"]
@@ -14,8 +14,9 @@
 [ext_resource type="PackedScene" uid="uid://beio6mgh58hty" path="res://scenes/cat.tscn" id="12_2wle0"]
 [ext_resource type="PackedScene" path="res://poc/scenes/prototype_annex.tscn" id="13_sqk5s"]
 [ext_resource type="PackedScene" path="res://scenes/ceiling_light_fixture.tscn" id="14_h1b7d"]
-[ext_resource type="PackedScene" path="res://scenes/room_upper_shell.tscn" id="15_q8h2j"]
-[ext_resource type="PackedScene" path="res://scenes/staircase_up.tscn" id="16_d6m1r"]
+[ext_resource type="PackedScene" uid="uid://botjfajadg3eb" path="res://scenes/room_upper_shell.tscn" id="15_q8h2j"]
+[ext_resource type="PackedScene" uid="uid://8qjlg6o1q6cg" path="res://scenes/staircase_up.tscn" id="16_d6m1r"]
+[ext_resource type="PackedScene" uid="uid://b1eu081cvjyst" path="res://scenes/modular_wooden_stairs_-_game_ready_asset.glb" id="17_muem4"]
 
 [sub_resource type="Environment" id="Environment_jp4p0"]
 background_mode = 1
@@ -161,3 +162,6 @@ transform = Transform3D(1, 0, 0, 0, 1.0626848, 0, 0, 0, 1, 18, 0, -1.1)
 
 [node name="PrototypeAnnex" parent="." instance=ExtResource("13_sqk5s")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0, 0)
+
+[node name="Sketchfab_Scene" parent="." instance=ExtResource("17_muem4")]
+transform = Transform3D(1.9180293, 0, 0, 0, 1.3525279, 0, 0, 0, 1, -7.221807, 0.030443907, 1.9737177)
