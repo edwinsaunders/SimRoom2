@@ -57,7 +57,7 @@ The wrapper uses that directly for:
 
 Android remains "as far as practical" because this repo already relies on the committed source-template helpers under [platform/android](/home/edwin/Documents/SimRoom2/platform/android):
 
-1. Redot CLI runs [platform/android/build_pck.gd](/home/edwin/Documents/SimRoom2/platform/android/build_pck.gd)
+1. Redot CLI exports the Android pack with `--export-pack Android build/android/SimRoom.pck`
 2. the wrapper unpacks `android_source.zip`
 3. the wrapper injects `data.pck` and `_cl_`
 4. Gradle builds the debug APK

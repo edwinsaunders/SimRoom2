@@ -16,7 +16,6 @@
 [ext_resource type="PackedScene" path="res://scenes/ceiling_light_fixture.tscn" id="14_h1b7d"]
 [ext_resource type="PackedScene" uid="uid://botjfajadg3eb" path="res://scenes/room_upper_shell.tscn" id="15_q8h2j"]
 [ext_resource type="PackedScene" uid="uid://8qjlg6o1q6cg" path="res://scenes/staircase_up.tscn" id="16_d6m1r"]
-[ext_resource type="PackedScene" uid="uid://b1eu081cvjyst" path="res://scenes/modular_wooden_stairs_-_game_ready_asset.glb" id="17_muem4"]
 
 [sub_resource type="Environment" id="Environment_jp4p0"]
 background_mode = 1
@@ -162,6 +161,3 @@ transform = Transform3D(1, 0, 0, 0, 1.0626848, 0, 0, 0, 1, 18, 0, -1.1)
 
 [node name="PrototypeAnnex" parent="." instance=ExtResource("13_sqk5s")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0, 0)
-
-[node name="Sketchfab_Scene" parent="." instance=ExtResource("17_muem4")]
-transform = Transform3D(1.9180293, 0, 0, 0, 1.3525279, 0, 0, 0, 1, -7.221807, 0.030443907, 1.9737177)

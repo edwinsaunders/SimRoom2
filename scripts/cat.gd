@@ -59,14 +59,12 @@ func _physics_process(delta: float) -> void:
 
 
 func _load_model() -> void:
-	var document := GLTFDocument.new()
-	var state := GLTFState.new()
-	var error := document.append_from_file("res://cat_walk.glb", state)
-	if error != OK:
+	var cat_scene := load("res://cat_walk.glb") as PackedScene
+	if cat_scene == null:
 		push_warning("Failed to load cat model")
 		return
 
-	var generated := document.generate_scene(state) as Node3D
+	var generated := cat_scene.instantiate() as Node3D
 	if generated == null:
 		push_warning("Failed to generate cat scene")
 		return
@@ -76,7 +74,6 @@ func _load_model() -> void:
 	model_anchor.add_child(_model_root)
 	_scale_model_to_target_height()
 	_play_walk_animation()
-
 
 func _scale_model_to_target_height() -> void:
 	if _model_root == null:

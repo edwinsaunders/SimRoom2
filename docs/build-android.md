@@ -42,7 +42,7 @@ What is still machine-local:
 
 What is currently the reliable path on a fresh machine:
 
-- build the shared `data.pck`
+- export the shared Android `data.pck`
 - unpack the Android source template
 - inject `data.pck` and `_cl_`
 - run the Gradle debug build
@@ -210,7 +210,7 @@ mkdir -p build/android build/android_source build/logs
 Linux host:
 
 ```bash
-./run.sh --headless --script platform/android/build_pck.gd --log-file build/logs/android-pack.log
+./redot.linuxbsd.editor.x86_64 --headless --path . --export-pack Android build/android/SimRoom.pck --log-file build/logs/android-pack.log
 ```
 
 Expected output:
@@ -219,8 +219,7 @@ Expected output:
 
 Windows host:
 
-- open the project in Redot on Windows
-- run the helper script or use that Redot build’s equivalent headless script invocation against `platform/android/build_pck.gd`
+- run that Windows Redot build with the Android export preset and `--export-pack`
 - the expected output is still `build/android/SimRoom.pck`
 
 ### 3. Unpack the Android source template

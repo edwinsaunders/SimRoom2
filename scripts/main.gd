@@ -11,7 +11,9 @@ const VIDEO_AUDIO_MIN_VOLUME_DB := -28.0
 const VIDEO_AUDIO_MAX_VOLUME_DB := -4.0
 const VIDEO_AUDIO_SMOOTHING_SPEED := 8.0
 const PROGRAM_INTERACTION_DISTANCE := 2.4
-const WALL_TEXTURE_GLB_PATH := "res://the_backrooms_wallpaper_texture.glb"
+const WALL_COLOR_PATH := "res://backrooms/wallpaper/wallpaper_color.png"
+const WALL_NORMAL_PATH := "res://backrooms/wallpaper/wallpaper_normal.png"
+const WALL_ROUGHNESS_PATH := "res://backrooms/wallpaper/wallpaper_rough.png"
 const FLOOR_COLOR_PATH := "res://backrooms/carpet/carpet_color.png"
 const FLOOR_NORMAL_PATH := "res://backrooms/carpet/carpet_normal.png"
 const FLOOR_ROUGHNESS_PATH := "res://backrooms/carpet/carpet_rough.png"
@@ -47,6 +49,7 @@ var _quit_requested := false
 
 func _ready() -> void:
 	get_tree().auto_accept_quit = false
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	music.stop()
 	music.stream = null
 
@@ -101,34 +104,12 @@ func _configure_scene() -> void:
 
 
 func _apply_backrooms_wall_material() -> void:
-	_wall_material = _load_wall_material_from_glb()
+	_wall_material = _build_surface_material(WALL_COLOR_PATH, WALL_NORMAL_PATH, WALL_ROUGHNESS_PATH)
 	if _wall_material == null:
 		return
 
 	for root in [room_a, upper_room, staircase_up, room_b, doorway_opening, prototype_doorway, prototype_annex]:
 		_apply_wall_material_recursive(root)
-
-
-func _load_wall_material_from_glb() -> Material:
-	var document := GLTFDocument.new()
-	var state := GLTFState.new()
-	var error := document.append_from_file(WALL_TEXTURE_GLB_PATH, state)
-	if error != OK:
-		push_warning("Failed to load wall texture GLB: %s" % WALL_TEXTURE_GLB_PATH)
-		return null
-
-	var generated := document.generate_scene(state)
-	if generated == null:
-		push_warning("Failed to generate wall texture scene from GLB")
-		return null
-
-	var source_material := _find_first_material(generated)
-	generated.free()
-	if source_material == null:
-		push_warning("No wall material found in GLB")
-		return null
-
-	return source_material.duplicate(true)
 
 
 func _apply_backrooms_floor_and_ceiling_materials() -> void:
@@ -160,11 +141,7 @@ func _build_surface_material(color_path: String, normal_path: String, roughness_
 
 
 func _load_runtime_texture(path: String) -> Texture2D:
-	var image := Image.load_from_file(ProjectSettings.globalize_path(path))
-	if image == null or image.is_empty():
-		return null
-
-	return ImageTexture.create_from_image(image)
+	return load(path) as Texture2D
 
 
 func _find_first_material(node: Node) -> Material:

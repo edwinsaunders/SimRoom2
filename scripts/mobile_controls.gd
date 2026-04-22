@@ -3,23 +3,27 @@ extends CanvasLayer
 const MOVE_PAD_SIZE := 220.0
 const MOVE_KNOB_SIZE := 84.0
 const MOVE_RADIUS := 72.0
-const LOOK_ZONE_COLOR := Color(1, 1, 1, 0.08)
+const LOOK_PAD_SIZE := 220.0
+const LOOK_KNOB_SIZE := 84.0
+const LOOK_RADIUS := 72.0
 const ACTION_BUTTON_WIDTH := 136.0
 const ACTION_BUTTON_HEIGHT := 58.0
 
 var move_vector := Vector2.ZERO
 
-var _look_delta := Vector2.ZERO
+var _look_vector := Vector2.ZERO
 var _jump_requested := false
 var _interact_requested := false
 var _move_touch_id := -1
 var _look_touch_id := -1
 var _move_center := Vector2.ZERO
+var _look_center := Vector2.ZERO
 
 var _root: Control
 var _move_zone: Control
 var _move_knob: Control
 var _look_zone: Control
+var _look_knob: Control
 var _jump_zone: Control
 var _interact_zone: Control
 
@@ -32,6 +36,7 @@ func _ready() -> void:
 	layer = 10
 	_build_ui()
 	_update_move_knob(Vector2.ZERO)
+	_update_look_knob(Vector2.ZERO)
 
 
 func _should_show_mobile_controls() -> bool:
@@ -40,9 +45,7 @@ func _should_show_mobile_controls() -> bool:
 
 
 func consume_look_delta() -> Vector2:
-	var delta := _look_delta
-	_look_delta = Vector2.ZERO
-	return delta
+	return _look_vector
 
 
 func consume_jump_requested() -> bool:
@@ -100,19 +103,32 @@ func _build_ui() -> void:
 	_move_knob.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_move_zone.add_child(_move_knob)
 
-	_look_zone = ColorRect.new()
+	_look_zone = Control.new()
 	_look_zone.name = "LookZone"
-	_look_zone.anchor_left = 0.5
-	_look_zone.anchor_top = 0.0
+	_look_zone.anchor_left = 1.0
+	_look_zone.anchor_top = 1.0
 	_look_zone.anchor_right = 1.0
 	_look_zone.anchor_bottom = 1.0
-	_look_zone.offset_left = 0.0
-	_look_zone.offset_top = 0.0
-	_look_zone.offset_right = 0.0
-	_look_zone.offset_bottom = 0.0
-	_look_zone.color = LOOK_ZONE_COLOR
+	_look_zone.offset_left = -(LOOK_PAD_SIZE + ACTION_BUTTON_WIDTH + 48.0)
+	_look_zone.offset_top = -252.0
+	_look_zone.offset_right = -(ACTION_BUTTON_WIDTH + 48.0)
+	_look_zone.offset_bottom = -32.0
 	_look_zone.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_look_zone)
+
+	var look_base := ColorRect.new()
+	look_base.name = "LookBase"
+	look_base.color = Color(0.82, 0.9, 1.0, 0.18)
+	look_base.set_anchors_preset(Control.PRESET_FULL_RECT)
+	look_base.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_look_zone.add_child(look_base)
+
+	_look_knob = ColorRect.new()
+	_look_knob.name = "LookKnob"
+	_look_knob.color = Color(0.9, 0.97, 1.0, 0.42)
+	_look_knob.custom_minimum_size = Vector2(LOOK_KNOB_SIZE, LOOK_KNOB_SIZE)
+	_look_knob.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_look_zone.add_child(_look_knob)
 
 	_interact_zone = _make_action_zone("InteractZone", "USE", 164.0)
 	_root.add_child(_interact_zone)
@@ -171,6 +187,8 @@ func _handle_screen_touch(event: InputEventScreenTouch) -> void:
 
 		if _look_touch_id == -1 and _look_zone.get_global_rect().has_point(event.position):
 			_look_touch_id = event.index
+			_look_center = _look_zone.get_global_rect().get_center()
+			_update_look_from_position(event.position)
 			return
 
 	if not event.pressed:
@@ -180,13 +198,15 @@ func _handle_screen_touch(event: InputEventScreenTouch) -> void:
 			_update_move_knob(Vector2.ZERO)
 		elif event.index == _look_touch_id:
 			_look_touch_id = -1
+			_look_vector = Vector2.ZERO
+			_update_look_knob(Vector2.ZERO)
 
 
 func _handle_screen_drag(event: InputEventScreenDrag) -> void:
 	if event.index == _move_touch_id:
 		_update_move_from_position(event.position)
 	elif event.index == _look_touch_id:
-		_look_delta += event.relative
+		_update_look_from_position(event.position)
 
 
 func _update_move_from_position(position: Vector2) -> void:
@@ -194,7 +214,7 @@ func _update_move_from_position(position: Vector2) -> void:
 	if offset.length() > MOVE_RADIUS:
 		offset = offset.normalized() * MOVE_RADIUS
 
-	move_vector = Vector2(offset.x / MOVE_RADIUS, -offset.y / MOVE_RADIUS)
+	move_vector = Vector2(offset.x / MOVE_RADIUS, offset.y / MOVE_RADIUS)
 	if move_vector.length() > 1.0:
 		move_vector = move_vector.normalized()
 
@@ -205,6 +225,25 @@ func _update_move_knob(offset: Vector2) -> void:
 	_move_knob.position = Vector2(
 		MOVE_PAD_SIZE * 0.5 - MOVE_KNOB_SIZE * 0.5,
 		MOVE_PAD_SIZE * 0.5 - MOVE_KNOB_SIZE * 0.5
+	) + offset
+
+
+func _update_look_from_position(position: Vector2) -> void:
+	var offset := position - _look_center
+	if offset.length() > LOOK_RADIUS:
+		offset = offset.normalized() * LOOK_RADIUS
+
+	_look_vector = Vector2(offset.x / LOOK_RADIUS, offset.y / LOOK_RADIUS)
+	if _look_vector.length() > 1.0:
+		_look_vector = _look_vector.normalized()
+
+	_update_look_knob(offset)
+
+
+func _update_look_knob(offset: Vector2) -> void:
+	_look_knob.position = Vector2(
+		LOOK_PAD_SIZE * 0.5 - LOOK_KNOB_SIZE * 0.5,
+		LOOK_PAD_SIZE * 0.5 - LOOK_KNOB_SIZE * 0.5
 	) + offset
 
 

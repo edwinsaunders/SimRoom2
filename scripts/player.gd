@@ -6,6 +6,7 @@ const CROUCH_SPEED_MULTIPLIER := 0.55
 const JUMP_VELOCITY := 5.2
 const GRAVITY := 14.0
 const MOUSE_SENSITIVITY := 0.0025
+const MOBILE_LOOK_SPEED := 2.8
 const MIN_PITCH := deg_to_rad(-85.0)
 const MAX_PITCH := deg_to_rad(85.0)
 const INTERACTION_GROUP := "world_interactables"
@@ -110,7 +111,7 @@ func _physics_process(delta: float) -> void:
 	var jump_requested := Input.is_physical_key_pressed(KEY_SPACE)
 	var crouch_requested := Input.is_physical_key_pressed(KEY_CTRL)
 
-	_apply_mobile_look()
+	_apply_mobile_look(delta)
 
 	if Input.is_physical_key_pressed(KEY_W):
 		input_vector.y -= 1.0
@@ -169,16 +170,17 @@ func _exit_tree() -> void:
 	prepare_for_quit()
 
 
-func _apply_mobile_look() -> void:
+func _apply_mobile_look(delta: float) -> void:
 	if not _using_mobile_controls():
 		return
 
-	var look_delta: Vector2 = _mobile_controls.consume_look_delta()
-	if look_delta == Vector2.ZERO:
+	var look_vector: Vector2 = _mobile_controls.consume_look_delta()
+	if look_vector == Vector2.ZERO:
 		return
 
-	rotate_y(-look_delta.x * MOUSE_SENSITIVITY)
-	_pitch = clamp(_pitch - look_delta.y * MOUSE_SENSITIVITY, MIN_PITCH, MAX_PITCH)
+	var look_delta := look_vector * MOBILE_LOOK_SPEED * delta
+	rotate_y(-look_delta.x)
+	_pitch = clamp(_pitch - look_delta.y, MIN_PITCH, MAX_PITCH)
 	camera.rotation.x = _pitch
 
 

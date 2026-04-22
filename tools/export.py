@@ -253,8 +253,9 @@ def _export_android(engine_path: Path, env: dict[str, str], args: argparse.Names
             "--headless",
             "--path",
             ".",
-            "--script",
-            "platform/android/build_pck.gd",
+            "--export-pack",
+            "Android",
+            "build/android/SimRoom.pck",
             "--log-file",
             "build/logs/android-pack.log",
         ],
@@ -285,6 +286,9 @@ def _export_android(engine_path: Path, env: dict[str, str], args: argparse.Names
     gradle = source_root / ("gradlew.bat" if os.name == "nt" else "gradlew")
     if not gradle.exists():
         raise FileNotFoundError(f"Gradle wrapper not found: {gradle}")
+    
+    if os.name != "nt":
+        gradle.chmod(gradle.stat().st_mode | 0o111)
 
     gradle_command = [
         str(gradle),
